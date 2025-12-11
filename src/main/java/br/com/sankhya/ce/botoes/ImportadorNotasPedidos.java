@@ -7,9 +7,9 @@ import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.jape.wrapper.JapeWrapper;
+import br.com.sankhya.jape.wrapper.fluid.FluidCreateVO;
 import br.com.sankhya.modelcore.MGEModelException;
 import br.com.sankhya.ws.ServiceContext;
-import com.sankhya.util.BigDecimalUtil;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -29,14 +29,18 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
     @Override
     public void doAction(ContextoAcao contextoAcao) throws Exception {
         System.out.println("Botao de acao Importador");
+
+        JapeSession.SessionHandle hnd = null;
+
         Registro[] linhasSelecionadas = contextoAcao.getLinhas();
 
         LinhaJson ultimaLinhaJson = null;
-        int count = 0;
 
         try {
 
             for (Registro linha : linhasSelecionadas) {
+                int count = 0;
+
                 codImportador = (BigDecimal) linha.getCampo("CODIMP");
 
                 byte[] data = (byte[]) linha.getCampo("ARQUIVO");
@@ -44,6 +48,8 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                 ServiceContext ctx = ServiceContext.getCurrent();
                 File file = new File(ctx.getTempFolder(), "IMPORTADOR" + System.currentTimeMillis());
                 FileUtils.writeByteArrayToFile(file, data);
+
+                hnd = JapeSession.open();
 
                 try (BufferedReader br = new BufferedReader(new FileReader(file))) {
                     String line = br.readLine();
@@ -93,60 +99,63 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         BigDecimal projeto = toBigDecimal(json.getProjeto());
                         BigDecimal contrato = toBigDecimal(json.getContrato());
 
-                        JapeSession.SessionHandle hnd = null;
+
                         try {
-                            hnd = JapeSession.open();
+
                             JapeWrapper cabecalhoDAO = JapeFactory.dao("AD_IMPCABITEDET");
-                            DynamicVO saveCab = cabecalhoDAO.create()
-                                    .set("CODIMP", codImportador)
-                                    .set("CODEMP", codempresa)
-                                    .set("CODPARC", codparceiro)
-                                    .set("CODTIPOPER", codtipooperacao)
-                                    .set("DHTIPOPER", datahoraoperacao)
-                                    .set("CODTIPVENDA", codtiponegociacao)
-                                    .set("DTALTER", dataalteracaoCab)
-                                    .set("DTNEG", datanegociacao)
-                                    .set("NUMNOTA", nronota)
-                                    .set("TIPMOV", tipomovimento)
-                                    .set("SERIENOTA", serienota)
-                                    .set("VLRDESCTOT", vlrdescontototal)
-                                    .set("VLRNOTA", vlrnota)
-                                    .set("CODCENCUS", centroresultados)
-                                    .set("CODNAT", natureza)
-                                    .set("NUMCONTRATO", contrato)
-                                    .set("CODPROJ", projeto)
-                                    .set("OBSERVACAO", observacao)
-                                    .save();
+                            FluidCreateVO saveCab = cabecalhoDAO.create();
+                            saveCab.set("CODIMP", codImportador);
+                            saveCab.set("CODEMP", codempresa);
+                            saveCab.set("CODPARC", codparceiro);
+                            saveCab.set("CODTIPOPER", codtipooperacao);
+                            saveCab.set("DHTIPOPER", datahoraoperacao);
+                            saveCab.set("CODTIPVENDA", codtiponegociacao);
+                            saveCab.set("DTALTER", dataalteracaoCab);
+                            saveCab.set("DTNEG", datanegociacao);
+                            saveCab.set("NUMNOTA", nronota);
+                            saveCab.set("TIPMOV", tipomovimento);
+                            saveCab.set("SERIENOTA", serienota);
+                            saveCab.set("VLRDESCTOT", vlrdescontototal);
+                            saveCab.set("VLRNOTA", vlrnota);
+                            saveCab.set("CODCENCUS", centroresultados);
+                            saveCab.set("CODNAT", natureza);
+                            saveCab.set("NUMCONTRATO", contrato);
+                            saveCab.set("CODPROJ", projeto);
+                            saveCab.set("OBSERVACAO", observacao);
+                            DynamicVO save = saveCab.save();
 
-                            BigDecimal codlancnota = saveCab.asBigDecimal("CODLANCNOTA");
+                            BigDecimal codlancnota = save.asBigDecimal("CODLANCNOTA");
 
-//                            JapeWrapper itemDAO = JapeFactory.dao("AD_IMPITEDET");
-//                            DynamicVO saveItem = itemDAO.create()
-//                                    .set("CODLANCNOTA", codlancnota)
-//                                    .set("CODIMP", codImportador)
-//                                    .set("SEQUENCIA", sequencia)
-//                                    .set("CODPROD", codproduto)
-//                                    .set("CODVOL", codunidade)
-//                                    .set("PERCDESC", percdesconto)
-//                                    .set("QTDNEG", qtdnegociada)
-//                                    .set("VLRTOT", vlrtotal)
-//                                    .set("VLRUNIT", vlrunitario)
-//                                    .set("DHALTER", dataalteracaoItem)
-//                                    .save();
+                            try {
+                                JapeWrapper itemDAO = JapeFactory.dao("AD_IMPITEDET");
+                                FluidCreateVO saveItem = itemDAO.create();
+                                saveItem.set("CODLANCNOTA", codlancnota);
+                                saveItem.set("CODIMP", codImportador);
+                                saveItem.set("SEQUENCIA", sequencia);
+                                saveItem.set("CODPROD", codproduto);
+                                saveItem.set("CODVOL", codunidade);
+                                saveItem.set("PERCDESC", percdesconto);
+                                saveItem.set("QTDNEG", qtdnegociada);
+                                saveItem.set("VLRTOT", vlrtotal);
+                                saveItem.set("VLRUNIT", vlrunitario);
+                                saveItem.set("DHALTER", dataalteracaoItem);
+                                saveItem.save();
 
-                            //BigDecimal codImportItem = saveItem.asBigDecimal("CODITEM");
+                            } catch (Exception e) {
+                                MGEModelException.throwMe(e);
+                            }
 
                         } catch (Exception e) {
                             MGEModelException.throwMe(e);
-                        } finally {
-                            JapeSession.close(hnd);
                         }
 
                     }
+
+                    line = br.readLine();
                 }
             }
 
-            contextoAcao.setMensagemRetorno("Importação Finalizada! Total de linhas importadas: " + count);
+            contextoAcao.setMensagemRetorno("Importação Finalizada! ");
 
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
@@ -154,8 +163,10 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
             e.printStackTrace(pw);
             System.out.println("Log de erro Importador: " + sw.toString());
 
-            inserirErroLOG("ERRO:" + e.getMessage() + "\nErro na linha nro. " + count + ": \n" + ultimaLinhaJson, codImportador);
+            inserirErroLOG("ERRO:" + e.getMessage() + "\nErro na linha  \n" + ultimaLinhaJson, codImportador);
 
+        } finally {
+            JapeSession.close(hnd);
         }
     }
 
