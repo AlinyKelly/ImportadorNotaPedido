@@ -7,7 +7,6 @@ import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.jape.wrapper.JapeWrapper;
-import br.com.sankhya.jape.wrapper.fluid.FluidCreateVO;
 import br.com.sankhya.modelcore.MGEModelException;
 import br.com.sankhya.ws.ServiceContext;
 import org.apache.commons.io.FileUtils;
@@ -35,6 +34,11 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
         Registro[] linhasSelecionadas = contextoAcao.getLinhas();
 
         LinhaJson ultimaLinhaJson = null;
+
+        BigDecimal codlancnota = null;
+
+        BigDecimal nroNotaControle = null;
+        String serieNotaControle = null;
 
         try {
 
@@ -99,61 +103,70 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         BigDecimal projeto = toBigDecimal(json.getProjeto());
                         BigDecimal contrato = toBigDecimal(json.getContrato());
 
+                        System.out.println("Sequencia " + sequencia);
+                        System.out.println("Nronota " + nronota);
+
+                        boolean novaNota = nroNotaControle == null || nronota.compareTo(nroNotaControle) != 0 || !serienota.equals(serieNotaControle);
 
                         try {
+                            System.out.println("Inserir linha do cabecalho");
+                            
+                            if (novaNota) {
+                                Registro cabecalho = contextoAcao.novaLinha("AD_IMPCABITEDET");
+                                cabecalho.setCampo("CODIMP", codImportador);
+                                cabecalho.setCampo("CODEMP", codempresa);
+                                cabecalho.setCampo("CODPARC", codparceiro);
+                                cabecalho.setCampo("CODTIPOPER", codtipooperacao);
+                                cabecalho.setCampo("DHTIPOPER", datahoraoperacao);
+                                cabecalho.setCampo("CODTIPVENDA", codtiponegociacao);
+                                cabecalho.setCampo("DTALTER", dataalteracaoCab);
+                                cabecalho.setCampo("DTNEG", datanegociacao);
+                                cabecalho.setCampo("NUMNOTA", nronota);
+                                cabecalho.setCampo("TIPMOV", tipomovimento);
+                                cabecalho.setCampo("SERIENOTA", serienota);
+                                cabecalho.setCampo("VLRDESCTOT", vlrdescontototal);
+                                cabecalho.setCampo("VLRNOTA", vlrnota);
+                                cabecalho.setCampo("CODCENCUS", centroresultados);
+                                cabecalho.setCampo("CODNAT", natureza);
+                                cabecalho.setCampo("NUMCONTRATO", contrato);
+                                cabecalho.setCampo("CODPROJ", projeto);
+                                cabecalho.setCampo("OBSERVACAO", observacao);
+                                cabecalho.save();
 
-                            JapeWrapper cabecalhoDAO = JapeFactory.dao("AD_IMPCABITEDET");
-                            FluidCreateVO saveCab = cabecalhoDAO.create();
-                            saveCab.set("CODIMP", codImportador);
-                            saveCab.set("CODEMP", codempresa);
-                            saveCab.set("CODPARC", codparceiro);
-                            saveCab.set("CODTIPOPER", codtipooperacao);
-                            saveCab.set("DHTIPOPER", datahoraoperacao);
-                            saveCab.set("CODTIPVENDA", codtiponegociacao);
-                            saveCab.set("DTALTER", dataalteracaoCab);
-                            saveCab.set("DTNEG", datanegociacao);
-                            saveCab.set("NUMNOTA", nronota);
-                            saveCab.set("TIPMOV", tipomovimento);
-                            saveCab.set("SERIENOTA", serienota);
-                            saveCab.set("VLRDESCTOT", vlrdescontototal);
-                            saveCab.set("VLRNOTA", vlrnota);
-                            saveCab.set("CODCENCUS", centroresultados);
-                            saveCab.set("CODNAT", natureza);
-                            saveCab.set("NUMCONTRATO", contrato);
-                            saveCab.set("CODPROJ", projeto);
-                            saveCab.set("OBSERVACAO", observacao);
-                            DynamicVO save = saveCab.save();
+                                codlancnota = (BigDecimal) cabecalho.getCampo("CODLANCNOTA");
 
-                            BigDecimal codlancnota = save.asBigDecimal("CODLANCNOTA");
+                                // Atualiza controles
+                                nroNotaControle = nronota;
+                                serieNotaControle = serienota;
 
-                            try {
-                                JapeWrapper itemDAO = JapeFactory.dao("AD_IMPITEDET");
-                                FluidCreateVO saveItem = itemDAO.create();
-                                saveItem.set("CODLANCNOTA", codlancnota);
-                                saveItem.set("CODIMP", codImportador);
-                                saveItem.set("SEQUENCIA", sequencia);
-                                saveItem.set("CODPROD", codproduto);
-                                saveItem.set("CODVOL", codunidade);
-                                saveItem.set("PERCDESC", percdesconto);
-                                saveItem.set("QTDNEG", qtdnegociada);
-                                saveItem.set("VLRTOT", vlrtotal);
-                                saveItem.set("VLRUNIT", vlrunitario);
-                                saveItem.set("DHALTER", dataalteracaoItem);
-                                saveItem.save();
-
-                            } catch (Exception e) {
-                                MGEModelException.throwMe(e);
                             }
+                                // Inserir Itens
+                                Registro itens = contextoAcao.novaLinha("AD_IMPITEDET");
+                                itens.setCampo("CODLANCNOTA", codlancnota);
+                                itens.setCampo("CODIMP", codImportador);
+                                itens.setCampo("SEQUENCIA", sequencia);
+                                itens.setCampo("CODPROD", codproduto);
+                                itens.setCampo("CODVOL", codunidade);
+                                itens.setCampo("PERCDESC", percdesconto);
+                                itens.setCampo("QTDNEG", qtdnegociada);
+                                itens.setCampo("VLRTOT", vlrtotal);
+                                itens.setCampo("VLRUNIT", vlrunitario);
+                                itens.setCampo("DHALTER", dataalteracaoItem);
+                                itens.save();
 
                         } catch (Exception e) {
                             MGEModelException.throwMe(e);
                         }
 
+                        line = br.readLine();
                     }
 
-                    line = br.readLine();
                 }
+
+                System.out.println("Count for = " + count);
             }
+
+            System.out.println("For terminando");
 
             contextoAcao.setMensagemRetorno("Importação Finalizada! ");
 
@@ -168,10 +181,12 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
         } finally {
             JapeSession.close(hnd);
         }
+
+        System.out.println("Botao finalizado");
     }
 
     private void inserirErroLOG(String erro, BigDecimal codImportador) throws MGEModelException {
-
+        System.out.println("Inserir erro log");
         JapeSession.SessionHandle hnd = null;
         try {
             hnd = JapeSession.open();
