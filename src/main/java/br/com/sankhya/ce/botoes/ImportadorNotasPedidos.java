@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static br.com.sankhya.ce.utilitariosJava.UtilsJava.*;
+
 public class ImportadorNotasPedidos implements AcaoRotinaJava {
     private BigDecimal codImportador;
 
@@ -110,7 +112,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
 
                         try {
                             System.out.println("Inserir linha do cabecalho");
-                            
+
                             if (novaNota) {
                                 Registro cabecalho = contextoAcao.novaLinha("AD_IMPCABITEDET");
                                 cabecalho.setCampo("CODIMP", codImportador);
@@ -140,19 +142,19 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                                 serieNotaControle = serienota;
 
                             }
-                                // Inserir Itens
-                                Registro itens = contextoAcao.novaLinha("AD_IMPITEDET");
-                                itens.setCampo("CODLANCNOTA", codlancnota);
-                                itens.setCampo("CODIMP", codImportador);
-                                itens.setCampo("SEQUENCIA", sequencia);
-                                itens.setCampo("CODPROD", codproduto);
-                                itens.setCampo("CODVOL", codunidade);
-                                itens.setCampo("PERCDESC", percdesconto);
-                                itens.setCampo("QTDNEG", qtdnegociada);
-                                itens.setCampo("VLRTOT", vlrtotal);
-                                itens.setCampo("VLRUNIT", vlrunitario);
-                                itens.setCampo("DHALTER", dataalteracaoItem);
-                                itens.save();
+                            // Inserir Itens
+                            Registro itens = contextoAcao.novaLinha("AD_IMPITEDET");
+                            itens.setCampo("CODLANCNOTA", codlancnota);
+                            itens.setCampo("CODIMP", codImportador);
+                            itens.setCampo("SEQUENCIA", sequencia);
+                            itens.setCampo("CODPROD", codproduto);
+                            itens.setCampo("CODVOL", codunidade);
+                            itens.setCampo("PERCDESC", percdesconto);
+                            itens.setCampo("QTDNEG", qtdnegociada);
+                            itens.setCampo("VLRTOT", vlrtotal);
+                            itens.setCampo("VLRUNIT", vlrunitario);
+                            itens.setCampo("DHALTER", dataalteracaoItem);
+                            itens.save();
 
                         } catch (Exception e) {
                             MGEModelException.throwMe(e);
@@ -183,49 +185,6 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
         }
 
         System.out.println("Botao finalizado");
-    }
-
-    private void inserirErroLOG(String erro, BigDecimal codImportador) throws MGEModelException {
-        System.out.println("Inserir erro log");
-        JapeSession.SessionHandle hnd = null;
-        try {
-            hnd = JapeSession.open();
-            JapeWrapper logDAO = JapeFactory.dao("AD_IMPLOG");
-            DynamicVO save = logDAO.create()
-                    .set("CODIMP", codImportador)
-                    .set("ERRO", erro)
-                    .set("DHERRO", getDhAtual())
-                    .save();
-        } catch (Exception e) {
-            MGEModelException.throwMe(e);
-        } finally {
-            JapeSession.close(hnd);
-        }
-    }
-
-    public DynamicVO retornaVO(String instancia, String where) throws MGEModelException {
-
-        JapeSession.SessionHandle sh = null;
-
-        try {
-            sh = JapeSession.open();
-            JapeWrapper dao = JapeFactory.dao(instancia);
-            return dao.findOne(where);
-
-        } catch (Exception e) {
-            MGEModelException.throwMe(e);
-        } finally {
-            JapeSession.close(sh);
-        }
-
-        return null;
-    }
-
-    private String getReplaceFileInfo(String line) {
-        String regex = "__start_fileinformation__.*__end_fileinformation__";
-        Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
-        Matcher matcher = pattern.matcher(line);
-        return matcher.replaceAll("");
     }
 
     private LinhaJson trataLinha(String linha) throws MGEModelException {
@@ -284,59 +243,4 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
         );
     }
 
-    public BigDecimal converterValorMonetario(String valor) {
-        if (valor == null || valor.trim().isEmpty()) {
-            return null;
-        }
-
-        valor = valor.replace("\"", "")
-                .replace(".", "")
-                .replace(",", ".");
-
-        try {
-            return new BigDecimal(valor);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private BigDecimal toBigDecimal(String valor) {
-        // 1. Verifica se é null primeiro (EVITA O NullPointerException)
-        if (valor == null) {
-            return BigDecimal.ZERO;
-        }
-
-        // 2. Chama trim() e verifica se está vazio
-        String valorTratado = valor.trim();
-        if (valorTratado.isEmpty()) {
-            return BigDecimal.ZERO;
-        }
-
-        // 3. Converte
-        try {
-            return new BigDecimal(valorTratado);
-        } catch (NumberFormatException e) {
-            // Logar o erro ou lançar uma exceção mais específica se o formato for inválido
-            System.err.println("Erro de formato BigDecimal para o valor: " + valorTratado);
-            return BigDecimal.ZERO; // Ou trate como erro de linha
-        }
-    }
-
-    public Timestamp stringToTimeStamp(String str) {
-        if (str == null || str.trim().isEmpty()) {
-            return null;
-        }
-
-        try {
-            DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-            Date date = formatter.parse(str);
-            return new Timestamp(date.getTime());
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public Timestamp getDhAtual() {
-        return new Timestamp(System.currentTimeMillis());
-    }
 }
