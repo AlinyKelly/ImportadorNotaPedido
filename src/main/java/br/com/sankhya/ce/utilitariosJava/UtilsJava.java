@@ -42,7 +42,6 @@ public class UtilsJava {
     }
 
     public static void inserirErroLOG(String erro, BigDecimal codImportador) throws MGEModelException {
-        System.out.println("Inserir erro log");
         JapeSession.SessionHandle hnd = null;
         try {
             hnd = JapeSession.open();

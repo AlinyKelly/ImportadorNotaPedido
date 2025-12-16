@@ -52,7 +52,6 @@ public class InserirPortais implements AcaoRotinaJava {
                 cabecalhoNota.setProperty("CODEMP",codempresa);
                 cabecalhoNota.setProperty("CODPARC",codparceiro);
                 cabecalhoNota.setProperty("CODTIPOPER", codtipooperacao);
-//                cabecalhoNota.setProperty("DHTIPOPER", datahoraoperacao);
                 cabecalhoNota.setProperty("CODTIPVENDA", codtiponegociacao);
                 cabecalhoNota.setProperty("DTALTER", dataalteracaoCab);
                 cabecalhoNota.setProperty("DTNEG", datanegociacao);

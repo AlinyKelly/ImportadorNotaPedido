@@ -4,9 +4,6 @@ import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.Registro;
 import br.com.sankhya.jape.core.JapeSession;
-import br.com.sankhya.jape.vo.DynamicVO;
-import br.com.sankhya.jape.wrapper.JapeFactory;
-import br.com.sankhya.jape.wrapper.JapeWrapper;
 import br.com.sankhya.modelcore.MGEModelException;
 import br.com.sankhya.ws.ServiceContext;
 import org.apache.commons.io.FileUtils;
@@ -14,13 +11,8 @@ import org.apache.commons.io.FileUtils;
 import java.io.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static br.com.sankhya.ce.utilitariosJava.UtilsJava.*;
 
@@ -29,7 +21,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
 
     @Override
     public void doAction(ContextoAcao contextoAcao) throws Exception {
-        System.out.println("Botao de acao Importador");
+        System.out.println("Botao de acao Importador Portal");
 
         JapeSession.SessionHandle hnd = null;
 
@@ -84,13 +76,14 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         BigDecimal qtdnegociada = converterValorMonetario(json.getQtdnegociada());
                         BigDecimal vlrtotal = converterValorMonetario(json.getVlrtotal());
                         BigDecimal vlrunitario = converterValorMonetario(json.getVlrunitario());
-                        Timestamp dataalteracaoItem = stringToTimeStamp(json.getDataalteracaoItem());
+                        BigDecimal atualizaEstoque = toBigDecimal(json.getAtualizaEstoque());
+                        BigDecimal codLocalOrigem = toBigDecimal(json.getCodLocalOrig());
+                        String usoProd = json.getUsoProd();
 
                         //Cabecalho
                         BigDecimal codempresa = toBigDecimal(json.getCodempresa());
                         BigDecimal codparceiro = toBigDecimal(json.getCodparceiro());
                         BigDecimal codtipooperacao = toBigDecimal(json.getCodtipooperacao());
-                        Timestamp datahoraoperacao = stringToTimeStamp(json.getDatahoraoperacao());
                         BigDecimal codtiponegociacao = toBigDecimal(json.getCodtiponegociacao());
                         Timestamp dataalteracaoCab = stringToTimeStamp(json.getDataalteracaoCab());
                         Timestamp datanegociacao = stringToTimeStamp(json.getDatanegociacao());
@@ -105,13 +98,9 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         BigDecimal projeto = toBigDecimal(json.getProjeto());
                         BigDecimal contrato = toBigDecimal(json.getContrato());
 
-                        System.out.println("Sequencia " + sequencia);
-                        System.out.println("Nronota " + nronota);
-
                         boolean novaNota = nroNotaControle == null || nronota.compareTo(nroNotaControle) != 0 || !serienota.equals(serieNotaControle);
 
                         try {
-                            System.out.println("Inserir linha do cabecalho");
 
                             if (novaNota) {
                                 Registro cabecalho = contextoAcao.novaLinha("AD_IMPCABITEDET");
@@ -119,7 +108,6 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                                 cabecalho.setCampo("CODEMP", codempresa);
                                 cabecalho.setCampo("CODPARC", codparceiro);
                                 cabecalho.setCampo("CODTIPOPER", codtipooperacao);
-                                cabecalho.setCampo("DHTIPOPER", datahoraoperacao);
                                 cabecalho.setCampo("CODTIPVENDA", codtiponegociacao);
                                 cabecalho.setCampo("DTALTER", dataalteracaoCab);
                                 cabecalho.setCampo("DTNEG", datanegociacao);
@@ -153,7 +141,9 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                             itens.setCampo("QTDNEG", qtdnegociada);
                             itens.setCampo("VLRTOT", vlrtotal);
                             itens.setCampo("VLRUNIT", vlrunitario);
-                            itens.setCampo("DHALTER", dataalteracaoItem);
+                            itens.setCampo("ATUALESTOQUE", atualizaEstoque);
+                            itens.setCampo("CODLOCALORIG", codLocalOrigem);
+                            itens.setCampo("USOPROD", usoProd);
                             itens.save();
 
                         } catch (Exception e) {
@@ -165,10 +155,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
 
                 }
 
-                System.out.println("Count for = " + count);
             }
-
-            System.out.println("For terminando");
 
             contextoAcao.setMensagemRetorno("Importação Finalizada! ");
 
@@ -184,7 +171,6 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
             JapeSession.close(hnd);
         }
 
-        System.out.println("Botao finalizado");
     }
 
     private LinhaJson trataLinha(String linha) throws MGEModelException {
@@ -239,7 +225,8 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                 filtradas.get(21),
                 filtradas.get(22),
                 filtradas.get(23),
-                filtradas.get(24)
+                filtradas.get(24),
+                filtradas.get(25)
         );
     }
 

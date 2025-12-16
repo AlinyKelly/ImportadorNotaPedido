@@ -8,26 +8,27 @@ public class LinhaJson {
     private final String qtdnegociada;
     private final String vlrtotal;
     private final String vlrunitario;
-    private final String dataalteracaoItem;
+    private final String atualizaEstoque;
+    private final String codLocalOrig;
+    private final String usoProd;
+    private final String nronota;
+    private final String serienota;
+    private final String tipomovimento;
     private final String codempresa;
     private final String codparceiro;
     private final String codtipooperacao;
-    private final String datahoraoperacao;
     private final String codtiponegociacao;
     private final String dataalteracaoCab;
     private final String datanegociacao;
-    private final String nronota;
-    private final String tipomovimento;
     private final String vlrdescontototal;
     private final String vlrnota;
-    private final String serienota;
     private final String observacao;
     private final String centroresultados;
     private final String natureza;
     private final String projeto;
     private final String contrato;
 
-    public LinhaJson(String sequencia, String codproduto, String codunidade, String percdesconto, String qtdnegociada, String vlrtotal, String vlrunitario, String dataalteracaoItem, String codempresa, String codparceiro, String codtipooperacao, String datahoraoperacao, String codtiponegociacao, String dataalteracaoCab, String datanegociacao, String nronota, String tipomovimento, String vlrdescontototal, String vlrnota, String serienota, String observacao, String centroresultados, String natureza, String projeto, String contrato) {
+    public LinhaJson(String sequencia, String codproduto, String codunidade, String percdesconto, String qtdnegociada, String vlrtotal, String vlrunitario, String atualizaEstoque, String codLocalOrig, String usoProd, String nronota, String serienota, String tipomovimento, String codempresa, String codparceiro, String codtipooperacao, String codtiponegociacao, String dataalteracaoCab, String datanegociacao, String vlrdescontototal, String vlrnota, String observacao, String centroresultados, String natureza, String projeto, String contrato) {
         this.sequencia = sequencia;
         this.codproduto = codproduto;
         this.codunidade = codunidade;
@@ -35,19 +36,20 @@ public class LinhaJson {
         this.qtdnegociada = qtdnegociada;
         this.vlrtotal = vlrtotal;
         this.vlrunitario = vlrunitario;
-        this.dataalteracaoItem = dataalteracaoItem;
+        this.atualizaEstoque = atualizaEstoque;
+        this.codLocalOrig = codLocalOrig;
+        this.usoProd = usoProd;
+        this.nronota = nronota;
+        this.serienota = serienota;
+        this.tipomovimento = tipomovimento;
         this.codempresa = codempresa;
         this.codparceiro = codparceiro;
         this.codtipooperacao = codtipooperacao;
-        this.datahoraoperacao = datahoraoperacao;
         this.codtiponegociacao = codtiponegociacao;
         this.dataalteracaoCab = dataalteracaoCab;
         this.datanegociacao = datanegociacao;
-        this.nronota = nronota;
-        this.tipomovimento = tipomovimento;
         this.vlrdescontototal = vlrdescontototal;
         this.vlrnota = vlrnota;
-        this.serienota = serienota;
         this.observacao = observacao;
         this.centroresultados = centroresultados;
         this.natureza = natureza;
@@ -83,8 +85,28 @@ public class LinhaJson {
         return vlrunitario;
     }
 
-    public String getDataalteracaoItem() {
-        return dataalteracaoItem;
+    public String getAtualizaEstoque() {
+        return atualizaEstoque;
+    }
+
+    public String getCodLocalOrig() {
+        return codLocalOrig;
+    }
+
+    public String getUsoProd() {
+        return usoProd;
+    }
+
+    public String getNronota() {
+        return nronota;
+    }
+
+    public String getSerienota() {
+        return serienota;
+    }
+
+    public String getTipomovimento() {
+        return tipomovimento;
     }
 
     public String getCodempresa() {
@@ -99,10 +121,6 @@ public class LinhaJson {
         return codtipooperacao;
     }
 
-    public String getDatahoraoperacao() {
-        return datahoraoperacao;
-    }
-
     public String getCodtiponegociacao() {
         return codtiponegociacao;
     }
@@ -115,24 +133,12 @@ public class LinhaJson {
         return datanegociacao;
     }
 
-    public String getNronota() {
-        return nronota;
-    }
-
-    public String getTipomovimento() {
-        return tipomovimento;
-    }
-
     public String getVlrdescontototal() {
         return vlrdescontototal;
     }
 
     public String getVlrnota() {
         return vlrnota;
-    }
-
-    public String getSerienota() {
-        return serienota;
     }
 
     public String getObservacao() {
