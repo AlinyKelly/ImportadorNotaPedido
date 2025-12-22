@@ -1,6 +1,7 @@
 package br.com.sankhya.ce.botoes;
 
 public class LinhaJson {
+    private final String idImportador;
     private final String sequencia;
     private final String codproduto;
     private final String codunidade;
@@ -8,12 +9,9 @@ public class LinhaJson {
     private final String qtdnegociada;
     private final String vlrtotal;
     private final String vlrunitario;
-    private final String atualizaEstoque;
     private final String codLocalOrig;
-    private final String usoProd;
     private final String nronota;
     private final String serienota;
-    private final String tipomovimento;
     private final String codempresa;
     private final String codparceiro;
     private final String codtipooperacao;
@@ -27,8 +25,10 @@ public class LinhaJson {
     private final String natureza;
     private final String projeto;
     private final String contrato;
+    private final String vendedor;
 
-    public LinhaJson(String sequencia, String codproduto, String codunidade, String percdesconto, String qtdnegociada, String vlrtotal, String vlrunitario, String atualizaEstoque, String codLocalOrig, String usoProd, String nronota, String serienota, String tipomovimento, String codempresa, String codparceiro, String codtipooperacao, String codtiponegociacao, String dataalteracaoCab, String datanegociacao, String vlrdescontototal, String vlrnota, String observacao, String centroresultados, String natureza, String projeto, String contrato) {
+    public LinhaJson(String idImportador, String sequencia, String codproduto, String codunidade, String percdesconto, String qtdnegociada, String vlrtotal, String vlrunitario, String codLocalOrig, String nronota, String serienota, String codempresa, String codparceiro, String codtipooperacao, String codtiponegociacao, String dataalteracaoCab, String datanegociacao, String vlrdescontototal, String vlrnota, String observacao, String centroresultados, String natureza, String projeto, String contrato, String vendedor) {
+        this.idImportador = idImportador;
         this.sequencia = sequencia;
         this.codproduto = codproduto;
         this.codunidade = codunidade;
@@ -36,12 +36,9 @@ public class LinhaJson {
         this.qtdnegociada = qtdnegociada;
         this.vlrtotal = vlrtotal;
         this.vlrunitario = vlrunitario;
-        this.atualizaEstoque = atualizaEstoque;
         this.codLocalOrig = codLocalOrig;
-        this.usoProd = usoProd;
         this.nronota = nronota;
         this.serienota = serienota;
-        this.tipomovimento = tipomovimento;
         this.codempresa = codempresa;
         this.codparceiro = codparceiro;
         this.codtipooperacao = codtipooperacao;
@@ -55,6 +52,11 @@ public class LinhaJson {
         this.natureza = natureza;
         this.projeto = projeto;
         this.contrato = contrato;
+        this.vendedor = vendedor;
+    }
+
+    public String getIdImportador() {
+        return idImportador;
     }
 
     public String getSequencia() {
@@ -85,16 +87,8 @@ public class LinhaJson {
         return vlrunitario;
     }
 
-    public String getAtualizaEstoque() {
-        return atualizaEstoque;
-    }
-
     public String getCodLocalOrig() {
         return codLocalOrig;
-    }
-
-    public String getUsoProd() {
-        return usoProd;
     }
 
     public String getNronota() {
@@ -103,10 +97,6 @@ public class LinhaJson {
 
     public String getSerienota() {
         return serienota;
-    }
-
-    public String getTipomovimento() {
-        return tipomovimento;
     }
 
     public String getCodempresa() {
@@ -159,6 +149,10 @@ public class LinhaJson {
 
     public String getContrato() {
         return contrato;
+    }
+
+    public String getVendedor() {
+        return vendedor;
     }
 
     @Override

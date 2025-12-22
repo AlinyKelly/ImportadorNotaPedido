@@ -3,8 +3,14 @@ package br.com.sankhya.ce.botoes;
 import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.Registro;
+import br.com.sankhya.jape.EntityFacade;
 import br.com.sankhya.jape.core.JapeSession;
+import br.com.sankhya.jape.sql.NativeSql;
+import br.com.sankhya.jape.util.FinderWrapper;
+import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.modelcore.MGEModelException;
+import br.com.sankhya.modelcore.util.DynamicEntityNames;
+import br.com.sankhya.modelcore.util.EntityFacadeFactory;
 import br.com.sankhya.ws.ServiceContext;
 import org.apache.commons.io.FileUtils;
 
@@ -12,6 +18,7 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static br.com.sankhya.ce.utilitariosJava.UtilsJava.*;
@@ -31,8 +38,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
 
         BigDecimal codlancnota = null;
 
-        BigDecimal nroNotaControle = null;
-        String serieNotaControle = null;
+        String idImportadorControle = null;
 
         try {
 
@@ -68,6 +74,8 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         LinhaJson json = trataLinha(line);
                         ultimaLinhaJson = json;
 
+                        String idImportador = json.getIdImportador();
+
                         //Item
                         BigDecimal sequencia = toBigDecimal(json.getSequencia());
                         BigDecimal codproduto = toBigDecimal(json.getCodproduto());
@@ -76,9 +84,8 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         BigDecimal qtdnegociada = converterValorMonetario(json.getQtdnegociada());
                         BigDecimal vlrtotal = converterValorMonetario(json.getVlrtotal());
                         BigDecimal vlrunitario = converterValorMonetario(json.getVlrunitario());
-                        BigDecimal atualizaEstoque = toBigDecimal(json.getAtualizaEstoque());
                         BigDecimal codLocalOrigem = toBigDecimal(json.getCodLocalOrig());
-                        String usoProd = json.getUsoProd();
+                        String usoProd = NativeSql.getString("PRO.USOPROD", "TGFPRO PRO", "PRO.CODPROD = ?", new Object[] { codproduto });
 
                         //Cabecalho
                         BigDecimal codempresa = toBigDecimal(json.getCodempresa());
@@ -88,7 +95,8 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         Timestamp dataalteracaoCab = stringToTimeStamp(json.getDataalteracaoCab());
                         Timestamp datanegociacao = stringToTimeStamp(json.getDatanegociacao());
                         BigDecimal nronota = toBigDecimal(json.getNronota());
-                        String tipomovimento = json.getTipomovimento();
+                        String tipomovimento = NativeSql.getString("TOP1.TIPMOV", "TGFTOP TOP1", "TOP1.CODTIPOPER = ?", new Object[] { codtipooperacao });
+                        String atualEstoque = NativeSql.getString("TOP2.ATUALEST", "TGFTOP TOP2", "TOP2.CODTIPOPER = ?", new Object[] { codtipooperacao });
                         BigDecimal vlrdescontototal = converterValorMonetario(json.getVlrdescontototal());
                         BigDecimal vlrnota = converterValorMonetario(json.getVlrnota());
                         String serienota = json.getSerienota();
@@ -97,13 +105,29 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         BigDecimal natureza = toBigDecimal(json.getNatureza());
                         BigDecimal projeto = toBigDecimal(json.getProjeto());
                         BigDecimal contrato = toBigDecimal(json.getContrato());
+                        BigDecimal vendedor = toBigDecimal(json.getVendedor());
 
-                        boolean novaNota = nroNotaControle == null || nronota.compareTo(nroNotaControle) != 0 || !serienota.equals(serieNotaControle);
+
+                        BigDecimal atualizaEstoque = BigDecimal.ZERO;
+
+                        if ("E".equals(atualEstoque)) {
+                            atualizaEstoque = BigDecimal.ONE;
+                        } else if ("B".equals(atualEstoque)) {
+                            atualizaEstoque = new BigDecimal(-1);
+                        }
+
+                        System.out.println("ID Importador " + idImportador);
+                        System.out.println("ID idImportadorControle " + idImportadorControle);
+
+                        boolean novaNota = !idImportador.equals(idImportadorControle);
+
+                        System.out.println("Novo lançamento " + novaNota);
 
                         try {
 
                             if (novaNota) {
                                 Registro cabecalho = contextoAcao.novaLinha("AD_IMPCABITEDET");
+                                cabecalho.setCampo("IDIMPORTADOR", idImportador);
                                 cabecalho.setCampo("CODIMP", codImportador);
                                 cabecalho.setCampo("CODEMP", codempresa);
                                 cabecalho.setCampo("CODPARC", codparceiro);
@@ -121,13 +145,13 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                                 cabecalho.setCampo("NUMCONTRATO", contrato);
                                 cabecalho.setCampo("CODPROJ", projeto);
                                 cabecalho.setCampo("OBSERVACAO", observacao);
+                                cabecalho.setCampo("CODVEND", vendedor);
                                 cabecalho.save();
 
                                 codlancnota = (BigDecimal) cabecalho.getCampo("CODLANCNOTA");
 
                                 // Atualiza controles
-                                nroNotaControle = nronota;
-                                serieNotaControle = serienota;
+                                idImportadorControle = idImportador;
 
                             }
                             // Inserir Itens
@@ -225,8 +249,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                 filtradas.get(21),
                 filtradas.get(22),
                 filtradas.get(23),
-                filtradas.get(24),
-                filtradas.get(25)
+                filtradas.get(24)
         );
     }
 

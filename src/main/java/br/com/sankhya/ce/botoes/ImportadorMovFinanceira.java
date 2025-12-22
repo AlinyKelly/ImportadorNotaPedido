@@ -33,8 +33,6 @@ public class ImportadorMovFinanceira implements AcaoRotinaJava {
 
         LinhaJsonFin ultimaLinhaJson = null;
 
-        BigDecimal codlancfin = null;
-
         try {
 
             for (Registro linha : linhasSelecionadas) {
@@ -98,6 +96,8 @@ public class ImportadorMovFinanceira implements AcaoRotinaJava {
                         Timestamp dtAlteracao = stringToTimeStamp(json.getDtAlteracao());
 
                         try {
+                            System.out.println("Cod Importador = " + codImportador);
+
                             Registro financeiro = contextoAcao.novaLinha("AD_IMPFINDET");
                             financeiro.setCampo("CODIMP", codImportador);
                             financeiro.setCampo("CODEMP", codEmp);
