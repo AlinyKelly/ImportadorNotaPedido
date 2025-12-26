@@ -25,6 +25,7 @@ public class InserirPortais implements AcaoRotinaJava {
     public void doAction(ContextoAcao contextoAcao) throws Exception {
         Registro[] linhasSelecionadas = contextoAcao.getLinhas();
         BigDecimal codImportador = null;
+        String idImportador = "";
         try {
             for (Registro linha : linhasSelecionadas) {
                 BigDecimal codlancnota = (BigDecimal) linha.getCampo("CODLANCNOTA");
@@ -45,81 +46,84 @@ public class InserirPortais implements AcaoRotinaJava {
                 BigDecimal natureza = (BigDecimal) linha.getCampo("CODNAT");
                 BigDecimal projeto = (BigDecimal) linha.getCampo("CODPROJ");
                 BigDecimal contrato = (BigDecimal) linha.getCampo("NUMCONTRATO");
+                BigDecimal nroUnico = (BigDecimal) linha.getCampo("NUNOTA");
+                idImportador = (String) linha.getCampo("IDIMPORTADOR");
 
-                EntityFacade dwfFacade = EntityFacadeFactory.getDWFFacade();
-                DynamicVO cabecalhoNota = (DynamicVO) dwfFacade.getDefaultValueObjectInstance("CabecalhoNota");
-                cabecalhoNota.setProperty("NUMNOTA",nronota);
-                cabecalhoNota.setProperty("CODEMP",codempresa);
-                cabecalhoNota.setProperty("CODPARC",codparceiro);
-                cabecalhoNota.setProperty("CODTIPOPER", codtipooperacao);
-                cabecalhoNota.setProperty("CODTIPVENDA", codtiponegociacao);
-                cabecalhoNota.setProperty("DTALTER", dataalteracaoCab);
-                cabecalhoNota.setProperty("DTNEG", datanegociacao);
-                cabecalhoNota.setProperty("TIPMOV", tipomovimento);
-                cabecalhoNota.setProperty("VLRDESCTOT", vlrdescontototal);
-                cabecalhoNota.setProperty("VLRNOTA", vlrnota);
-                cabecalhoNota.setProperty("SERIENOTA", serienota);
-                cabecalhoNota.setProperty("OBSERVACAO", observacao);
-                cabecalhoNota.setProperty("CODCENCUS", centroresultados);
-                cabecalhoNota.setProperty("CODNAT", natureza);
-                cabecalhoNota.setProperty("CODPROJ", projeto);
-                cabecalhoNota.setProperty("NUMCONTRATO", contrato);
-                cabecalhoNota.setProperty("AD_CODLANCNOTA", codlancnota);
-                cabecalhoNota.setProperty("AD_CODIMP", codImportador);
-                dwfFacade.createEntity("CabecalhoNota", (EntityVO) cabecalhoNota);
+                if (nroUnico == null) {
+                    EntityFacade dwfFacade = EntityFacadeFactory.getDWFFacade();
+                    DynamicVO cabecalhoNota = (DynamicVO) dwfFacade.getDefaultValueObjectInstance("CabecalhoNota");
+                    cabecalhoNota.setProperty("NUMNOTA", nronota);
+                    cabecalhoNota.setProperty("CODEMP", codempresa);
+                    cabecalhoNota.setProperty("CODPARC", codparceiro);
+                    cabecalhoNota.setProperty("CODTIPOPER", codtipooperacao);
+                    cabecalhoNota.setProperty("CODTIPVENDA", codtiponegociacao);
+                    cabecalhoNota.setProperty("DTALTER", dataalteracaoCab);
+                    cabecalhoNota.setProperty("DTNEG", datanegociacao);
+                    cabecalhoNota.setProperty("TIPMOV", tipomovimento);
+                    cabecalhoNota.setProperty("VLRDESCTOT", vlrdescontototal);
+                    cabecalhoNota.setProperty("VLRNOTA", vlrnota);
+                    cabecalhoNota.setProperty("SERIENOTA", serienota);
+                    cabecalhoNota.setProperty("OBSERVACAO", observacao);
+                    cabecalhoNota.setProperty("CODCENCUS", centroresultados);
+                    cabecalhoNota.setProperty("CODNAT", natureza);
+                    cabecalhoNota.setProperty("CODPROJ", projeto);
+                    cabecalhoNota.setProperty("NUMCONTRATO", contrato);
+                    cabecalhoNota.setProperty("AD_CODLANCNOTA", codlancnota);
+                    cabecalhoNota.setProperty("AD_CODIMP", codImportador);
+                    dwfFacade.createEntity("CabecalhoNota", (EntityVO) cabecalhoNota);
 
-                BigDecimal nunota = cabecalhoNota.asBigDecimal("NUNOTA");
+                    BigDecimal nunota = cabecalhoNota.asBigDecimal("NUNOTA");
 
-                linha.setCampo("NUNOTA", nunota);
+                    EntityFacade facade = EntityFacadeFactory.getDWFFacade();
+                    Collection<DynamicVO> itens = facade.findByDynamicFinderAsVO(new FinderWrapper("AD_IMPITEDET", "this.CODLANCNOTA = ? AND this.CODIMP = ?", new Object[]{codlancnota, codImportador}));
+                    for (DynamicVO itensVO : itens) {
+                        BigDecimal codItem = itensVO.asBigDecimal("CODITEM");
+                        BigDecimal codlancnotaItem = itensVO.asBigDecimal("CODLANCNOTA");
+                        BigDecimal codimportadorItem = itensVO.asBigDecimal("CODIMP");
+                        BigDecimal codproduto = itensVO.asBigDecimal("CODPROD");
+                        String codunidade = itensVO.asString("CODVOL");
+                        BigDecimal percdesconto = itensVO.asBigDecimalOrZero("PERCDESC");
+                        BigDecimal qtdnegociada = itensVO.asBigDecimal("QTDNEG");
+                        BigDecimal vlrtotal = itensVO.asBigDecimal("VLRTOT");
+                        BigDecimal vlrunitario = itensVO.asBigDecimal("VLRUNIT");
+                        BigDecimal atualEstoque = itensVO.asBigDecimal("ATUALESTOQUE");
+                        BigDecimal codlocalorig = itensVO.asBigDecimal("CODLOCALORIG");
+                        String usoprod = itensVO.asString("USOPROD");
 
-                EntityFacade facade = EntityFacadeFactory.getDWFFacade();
-                Collection<DynamicVO> itens = facade.findByDynamicFinderAsVO(new FinderWrapper("AD_IMPITEDET", "this.CODLANCNOTA = ? AND this.CODIMP = ?", new Object[] { codlancnota, codImportador }));
-                for (DynamicVO itensVO:itens) {
-                    BigDecimal codItem = itensVO.asBigDecimal("CODITEM");
-                    BigDecimal codlancnotaItem = itensVO.asBigDecimal("CODLANCNOTA");
-                    BigDecimal codimportadorItem = itensVO.asBigDecimal("CODIMP");
-                    BigDecimal codproduto = itensVO.asBigDecimal("CODPROD");
-                    String codunidade = itensVO.asString("CODVOL");
-                    BigDecimal percdesconto = itensVO.asBigDecimalOrZero("PERCDESC");
-                    BigDecimal qtdnegociada = itensVO.asBigDecimal("QTDNEG");
-                    BigDecimal vlrtotal = itensVO.asBigDecimal("VLRTOT");
-                    BigDecimal vlrunitario = itensVO.asBigDecimal("VLRUNIT");
-                    BigDecimal atualEstoque = itensVO.asBigDecimal("ATUALESTOQUE");
-                    BigDecimal codlocalorig = itensVO.asBigDecimal("CODLOCALORIG");
-                    String usoprod = itensVO.asString("USOPROD");
+                        EntityFacade dwfFacadeIte = EntityFacadeFactory.getDWFFacade();
+                        DynamicVO itemNota = (DynamicVO) dwfFacadeIte.getDefaultValueObjectInstance("ItemNota");
+                        itemNota.setProperty("NUNOTA", nunota);
+                        itemNota.setProperty("CODPROD", codproduto);
+                        itemNota.setProperty("CODVOL", codunidade);
+                        itemNota.setProperty("PERCDESC", percdesconto);
+                        itemNota.setProperty("QTDNEG", qtdnegociada);
+                        itemNota.setProperty("VLRTOT", vlrtotal);
+                        itemNota.setProperty("VLRUNIT", vlrunitario);
+                        itemNota.setProperty("ATUALESTOQUE", atualEstoque);
+                        itemNota.setProperty("CODLOCALORIG", codlocalorig);
+                        itemNota.setProperty("USOPROD", usoprod);
+                        itemNota.setProperty("AD_CODLANCNOTA", codlancnotaItem);
+                        itemNota.setProperty("AD_CODIMP", codimportadorItem);
+                        itemNota.setProperty("AD_CODITEM", codItem);
+                        dwfFacadeIte.createEntity("ItemNota", (EntityVO) itemNota);
 
-                    EntityFacade dwfFacadeIte = EntityFacadeFactory.getDWFFacade();
-                    DynamicVO itemNota = (DynamicVO) dwfFacadeIte.getDefaultValueObjectInstance("ItemNota");
-                    itemNota.setProperty("NUNOTA", nunota);
-                    itemNota.setProperty("CODPROD", codproduto);
-                    itemNota.setProperty("CODVOL", codunidade);
-                    itemNota.setProperty("PERCDESC", percdesconto);
-                    itemNota.setProperty("QTDNEG", qtdnegociada);
-                    itemNota.setProperty("VLRTOT", vlrtotal);
-                    itemNota.setProperty("VLRUNIT", vlrunitario);
-                    itemNota.setProperty("ATUALESTOQUE", atualEstoque);
-                    itemNota.setProperty("CODLOCALORIG", codlocalorig);
-                    itemNota.setProperty("USOPROD", usoprod);
-                    itemNota.setProperty("AD_CODLANCNOTA", codlancnotaItem);
-                    itemNota.setProperty("AD_CODIMP", codimportadorItem);
-                    itemNota.setProperty("AD_CODITEM", codItem);
-                    dwfFacadeIte.createEntity("ItemNota", (EntityVO) itemNota);
+                    }
+
+                    // Refazer Impostos
+                    JapeSession.putProperty("br.com.sankhya.com.CentralCompraVenda", Boolean.TRUE);
+
+                    ImpostosHelpper impostosHelper = new ImpostosHelpper();
+                    impostosHelper.setForcarRecalculo(true);
+                    impostosHelper.carregarNota(nunota);
+                    impostosHelper.calcularImpostos(nunota);// IPI, ICMS e etc..
+                    impostosHelper.totalizarNota(nunota);
+                    impostosHelper.salvarNota();
+
+                    // Refazer Financeiro
+                    CentralFinanceiro financeiro = new CentralFinanceiro();
+                    financeiro.inicializaNota(nunota);
+                    financeiro.refazerFinanceiro();
                 }
-
-                // Refazer Impostos
-                JapeSession.putProperty("br.com.sankhya.com.CentralCompraVenda", java.lang.Boolean.TRUE);
-
-                ImpostosHelpper impostosHelper = new ImpostosHelpper();
-                impostosHelper.setForcarRecalculo(true);
-                impostosHelper.carregarNota(nunota);
-                impostosHelper.calcularImpostos(nunota) ;// IPI, ICMS e etc..
-                impostosHelper.totalizarNota(nunota);
-                impostosHelper.salvarNota();
-
-                // Refazer Financeiro
-                CentralFinanceiro financeiro = new CentralFinanceiro();
-                financeiro.inicializaNota(nunota);
-                financeiro.refazerFinanceiro();
             }
 
         } catch (Exception e) {
@@ -128,7 +132,7 @@ public class InserirPortais implements AcaoRotinaJava {
             e.printStackTrace(pw);
             System.out.println("Log de erro Importador: " + sw.toString());
 
-            inserirErroLOG("Erro na criação da Nota. ERRO: " + e.getMessage(), codImportador);
+            inserirErroLOG("Erro na criação da Nota. Verifique o ID Importação = " + idImportador + " ERRO: " + e.getMessage(), codImportador);
         }
     }
 }

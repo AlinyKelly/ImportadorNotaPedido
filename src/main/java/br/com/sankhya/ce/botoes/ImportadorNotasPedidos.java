@@ -3,14 +3,9 @@ package br.com.sankhya.ce.botoes;
 import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.Registro;
-import br.com.sankhya.jape.EntityFacade;
 import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.sql.NativeSql;
-import br.com.sankhya.jape.util.FinderWrapper;
-import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.modelcore.MGEModelException;
-import br.com.sankhya.modelcore.util.DynamicEntityNames;
-import br.com.sankhya.modelcore.util.EntityFacadeFactory;
 import br.com.sankhya.ws.ServiceContext;
 import org.apache.commons.io.FileUtils;
 
@@ -18,7 +13,6 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static br.com.sankhya.ce.utilitariosJava.UtilsJava.*;
@@ -74,107 +68,115 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         LinhaJson json = trataLinha(line);
                         ultimaLinhaJson = json;
 
-                        String idImportador = json.getIdImportador();
+                        String idImportadorPlanilha = json.getIdImportador();
 
-                        //Item
-                        BigDecimal sequencia = toBigDecimal(json.getSequencia());
-                        BigDecimal codproduto = toBigDecimal(json.getCodproduto());
-                        String codunidade = json.getCodunidade();
-                        BigDecimal percdesconto = toBigDecimal(json.getPercdesconto());
-                        BigDecimal qtdnegociada = converterValorMonetario(json.getQtdnegociada());
-                        BigDecimal vlrtotal = converterValorMonetario(json.getVlrtotal());
-                        BigDecimal vlrunitario = converterValorMonetario(json.getVlrunitario());
-                        BigDecimal codLocalOrigem = toBigDecimal(json.getCodLocalOrig());
-                        String usoProd = NativeSql.getString("PRO.USOPROD", "TGFPRO PRO", "PRO.CODPROD = ?", new Object[] { codproduto });
+                        //Verificar se o IDIMPORTADOR existe na tabela AD_IMPCABITEDET, se exitir não insere o lançamento
+                        String buscaIdImp = NativeSql.getString("IMP.CODIMP", "AD_IMPCABITEDET IMP", "IMP.IDIMPORTADOR = ?", new Object[]{idImportadorPlanilha});
 
-                        //Cabecalho
-                        BigDecimal codempresa = toBigDecimal(json.getCodempresa());
-                        BigDecimal codparceiro = toBigDecimal(json.getCodparceiro());
-                        BigDecimal codtipooperacao = toBigDecimal(json.getCodtipooperacao());
-                        BigDecimal codtiponegociacao = toBigDecimal(json.getCodtiponegociacao());
-                        Timestamp dataalteracaoCab = stringToTimeStamp(json.getDataalteracaoCab());
-                        Timestamp datanegociacao = stringToTimeStamp(json.getDatanegociacao());
-                        BigDecimal nronota = toBigDecimal(json.getNronota());
-                        String tipomovimento = NativeSql.getString("TOP1.TIPMOV", "TGFTOP TOP1", "TOP1.CODTIPOPER = ?", new Object[] { codtipooperacao });
-                        String atualEstoque = NativeSql.getString("TOP2.ATUALEST", "TGFTOP TOP2", "TOP2.CODTIPOPER = ?", new Object[] { codtipooperacao });
-                        BigDecimal vlrdescontototal = converterValorMonetario(json.getVlrdescontototal());
-                        BigDecimal vlrnota = converterValorMonetario(json.getVlrnota());
-                        String serienota = json.getSerienota();
-                        String observacao = json.getObservacao();
-                        BigDecimal centroresultados = toBigDecimal(json.getCentroresultados());
-                        BigDecimal natureza = toBigDecimal(json.getNatureza());
-                        BigDecimal projeto = toBigDecimal(json.getProjeto());
-                        BigDecimal contrato = toBigDecimal(json.getContrato());
-                        BigDecimal vendedor = toBigDecimal(json.getVendedor());
+                        if (buscaIdImp == null) {
+                            //Item
+                            BigDecimal sequencia = toBigDecimal(json.getSequencia());
+                            BigDecimal codproduto = toBigDecimal(json.getCodproduto());
+                            String codunidade = json.getCodunidade();
+                            BigDecimal percdesconto = toBigDecimal(json.getPercdesconto());
+                            BigDecimal qtdnegociada = converterValorMonetario(json.getQtdnegociada());
+                            BigDecimal vlrtotal = converterValorMonetario(json.getVlrtotal());
+                            BigDecimal vlrunitario = converterValorMonetario(json.getVlrunitario());
+                            BigDecimal codLocalOrigem = toBigDecimal(json.getCodLocalOrig());
+                            String usoProd = NativeSql.getString("PRO.USOPROD", "TGFPRO PRO", "PRO.CODPROD = ?", new Object[]{codproduto});
+
+                            //Cabecalho
+                            BigDecimal codempresa = toBigDecimal(json.getCodempresa());
+                            BigDecimal codparceiro = toBigDecimal(json.getCodparceiro());
+                            BigDecimal codtipooperacao = toBigDecimal(json.getCodtipooperacao());
+                            BigDecimal codtiponegociacao = toBigDecimal(json.getCodtiponegociacao());
+                            Timestamp dataalteracaoCab = stringToTimeStamp(json.getDataalteracaoCab());
+                            Timestamp datanegociacao = stringToTimeStamp(json.getDatanegociacao());
+                            BigDecimal nronota = toBigDecimal(json.getNronota());
+                            String tipomovimento = NativeSql.getString("TOP1.TIPMOV", "TGFTOP TOP1", "TOP1.CODTIPOPER = ?", new Object[]{codtipooperacao});
+                            String atualEstoque = NativeSql.getString("TOP2.ATUALEST", "TGFTOP TOP2", "TOP2.CODTIPOPER = ?", new Object[]{codtipooperacao});
+                            BigDecimal vlrdescontototal = converterValorMonetario(json.getVlrdescontototal());
+                            BigDecimal vlrnota = converterValorMonetario(json.getVlrnota());
+                            String serienota = json.getSerienota();
+                            String observacao = json.getObservacao();
+                            BigDecimal centroresultados = toBigDecimal(json.getCentroresultados());
+                            BigDecimal natureza = toBigDecimal(json.getNatureza());
+                            BigDecimal projeto = toBigDecimal(json.getProjeto());
+                            BigDecimal contrato = toBigDecimal(json.getContrato());
+                            BigDecimal vendedor = toBigDecimal(json.getVendedor());
 
 
-                        BigDecimal atualizaEstoque = BigDecimal.ZERO;
+                            BigDecimal atualizaEstoque = BigDecimal.ZERO;
 
-                        if ("E".equals(atualEstoque)) {
-                            atualizaEstoque = BigDecimal.ONE;
-                        } else if ("B".equals(atualEstoque)) {
-                            atualizaEstoque = new BigDecimal(-1);
-                        }
-
-                        System.out.println("ID Importador " + idImportador);
-                        System.out.println("ID idImportadorControle " + idImportadorControle);
-
-                        boolean novaNota = !idImportador.equals(idImportadorControle);
-
-                        System.out.println("Novo lançamento " + novaNota);
-
-                        try {
-
-                            if (novaNota) {
-                                Registro cabecalho = contextoAcao.novaLinha("AD_IMPCABITEDET");
-                                cabecalho.setCampo("IDIMPORTADOR", idImportador);
-                                cabecalho.setCampo("CODIMP", codImportador);
-                                cabecalho.setCampo("CODEMP", codempresa);
-                                cabecalho.setCampo("CODPARC", codparceiro);
-                                cabecalho.setCampo("CODTIPOPER", codtipooperacao);
-                                cabecalho.setCampo("CODTIPVENDA", codtiponegociacao);
-                                cabecalho.setCampo("DTALTER", dataalteracaoCab);
-                                cabecalho.setCampo("DTNEG", datanegociacao);
-                                cabecalho.setCampo("NUMNOTA", nronota);
-                                cabecalho.setCampo("TIPMOV", tipomovimento);
-                                cabecalho.setCampo("SERIENOTA", serienota);
-                                cabecalho.setCampo("VLRDESCTOT", vlrdescontototal);
-                                cabecalho.setCampo("VLRNOTA", vlrnota);
-                                cabecalho.setCampo("CODCENCUS", centroresultados);
-                                cabecalho.setCampo("CODNAT", natureza);
-                                cabecalho.setCampo("NUMCONTRATO", contrato);
-                                cabecalho.setCampo("CODPROJ", projeto);
-                                cabecalho.setCampo("OBSERVACAO", observacao);
-                                cabecalho.setCampo("CODVEND", vendedor);
-                                cabecalho.save();
-
-                                codlancnota = (BigDecimal) cabecalho.getCampo("CODLANCNOTA");
-
-                                // Atualiza controles
-                                idImportadorControle = idImportador;
-
+                            if ("E".equals(atualEstoque)) {
+                                atualizaEstoque = BigDecimal.ONE;
+                            } else if ("B".equals(atualEstoque)) {
+                                atualizaEstoque = new BigDecimal(-1);
                             }
-                            // Inserir Itens
-                            Registro itens = contextoAcao.novaLinha("AD_IMPITEDET");
-                            itens.setCampo("CODLANCNOTA", codlancnota);
-                            itens.setCampo("CODIMP", codImportador);
-                            itens.setCampo("SEQUENCIA", sequencia);
-                            itens.setCampo("CODPROD", codproduto);
-                            itens.setCampo("CODVOL", codunidade);
-                            itens.setCampo("PERCDESC", percdesconto);
-                            itens.setCampo("QTDNEG", qtdnegociada);
-                            itens.setCampo("VLRTOT", vlrtotal);
-                            itens.setCampo("VLRUNIT", vlrunitario);
-                            itens.setCampo("ATUALESTOQUE", atualizaEstoque);
-                            itens.setCampo("CODLOCALORIG", codLocalOrigem);
-                            itens.setCampo("USOPROD", usoProd);
-                            itens.save();
 
-                        } catch (Exception e) {
-                            MGEModelException.throwMe(e);
+                            System.out.println("ID Importador " + idImportadorPlanilha);
+                            System.out.println("ID idImportadorControle " + idImportadorControle);
+
+                            boolean novaNota = !idImportadorPlanilha.equals(idImportadorControle);
+
+                            System.out.println("Novo lançamento " + novaNota);
+
+                            try {
+
+                                if (novaNota) {
+                                    Registro cabecalho = contextoAcao.novaLinha("AD_IMPCABITEDET");
+                                    cabecalho.setCampo("IDIMPORTADOR", idImportadorPlanilha);
+                                    cabecalho.setCampo("CODIMP", codImportador);
+                                    cabecalho.setCampo("CODEMP", codempresa);
+                                    cabecalho.setCampo("CODPARC", codparceiro);
+                                    cabecalho.setCampo("CODTIPOPER", codtipooperacao);
+                                    cabecalho.setCampo("CODTIPVENDA", codtiponegociacao);
+                                    cabecalho.setCampo("DTALTER", dataalteracaoCab);
+                                    cabecalho.setCampo("DTNEG", datanegociacao);
+                                    cabecalho.setCampo("NUMNOTA", nronota);
+                                    cabecalho.setCampo("TIPMOV", tipomovimento);
+                                    cabecalho.setCampo("SERIENOTA", serienota);
+                                    cabecalho.setCampo("VLRDESCTOT", vlrdescontototal);
+                                    cabecalho.setCampo("VLRNOTA", vlrnota);
+                                    cabecalho.setCampo("CODCENCUS", centroresultados);
+                                    cabecalho.setCampo("CODNAT", natureza);
+                                    cabecalho.setCampo("NUMCONTRATO", contrato);
+                                    cabecalho.setCampo("CODPROJ", projeto);
+                                    cabecalho.setCampo("OBSERVACAO", observacao);
+                                    cabecalho.setCampo("CODVEND", vendedor);
+                                    cabecalho.save();
+
+                                    codlancnota = (BigDecimal) cabecalho.getCampo("CODLANCNOTA");
+
+                                    // Atualiza controles
+                                    idImportadorControle = idImportadorPlanilha;
+
+                                }
+                                // Inserir Itens
+                                Registro itens = contextoAcao.novaLinha("AD_IMPITEDET");
+                                itens.setCampo("CODLANCNOTA", codlancnota);
+                                itens.setCampo("CODIMP", codImportador);
+                                itens.setCampo("SEQUENCIA", sequencia);
+                                itens.setCampo("CODPROD", codproduto);
+                                itens.setCampo("CODVOL", codunidade);
+                                itens.setCampo("PERCDESC", percdesconto);
+                                itens.setCampo("QTDNEG", qtdnegociada);
+                                itens.setCampo("VLRTOT", vlrtotal);
+                                itens.setCampo("VLRUNIT", vlrunitario);
+                                itens.setCampo("ATUALESTOQUE", atualizaEstoque);
+                                itens.setCampo("CODLOCALORIG", codLocalOrigem);
+                                itens.setCampo("USOPROD", usoProd);
+                                itens.save();
+
+                            } catch (Exception e) {
+                                inserirErroLOG("ID Importação = " + idImportadorPlanilha + "ERRO:" + e.getMessage() + "\nErro na linha:  \n" + ultimaLinhaJson, codImportador);
+                            }
+
+                            line = br.readLine();
+                        } else {
+                            String mensagemErro = "ID Importador: " + idImportadorPlanilha + " existe na tela de Importação, verifique a importação com o código: " + buscaIdImp;
+                            inserirErroLOG(mensagemErro, codImportador);
                         }
-
-                        line = br.readLine();
                     }
 
                 }
@@ -189,7 +191,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
             e.printStackTrace(pw);
             System.out.println("Log de erro Importador: " + sw.toString());
 
-            inserirErroLOG("ERRO:" + e.getMessage() + "\nErro na linha  \n" + ultimaLinhaJson, codImportador);
+            inserirErroLOG("ERRO:" + e.getMessage() + "\nErro na linha:  \n" + ultimaLinhaJson, codImportador);
 
         } finally {
             JapeSession.close(hnd);
