@@ -74,8 +74,6 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         String idImportadorPlanilha = json.getIdImportador();
                         BigDecimal sequencia = toBigDecimal(json.getSequencia());
 
-                        System.out.println("Cod. IDImportador da Planilha: " + idImportadorPlanilha);
-
                         //Verificar se o IDIMPORTADOR existe na tabela AD_IMPCABITEDET, se exitir não insere o lançamento
                         String buscaIdImp = null;
 
@@ -132,7 +130,6 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         BigDecimal contrato = toBigDecimal(json.getContrato());
                         BigDecimal vendedor = toBigDecimal(json.getVendedor());
 
-
                         BigDecimal atualizaEstoque = BigDecimal.ZERO;
 
                         if ("E".equals(atualEstoque)) {
@@ -141,12 +138,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                             atualizaEstoque = new BigDecimal(-1);
                         }
 
-                        System.out.println("ID Importador " + idImportadorPlanilha);
-                        System.out.println("ID idImportadorControle " + idImportadorControle);
-
                         boolean novaNota = !idImportadorPlanilha.equals(idImportadorControle);
-
-                        System.out.println("Novo lançamento " + novaNota);
 
                         try {
 
