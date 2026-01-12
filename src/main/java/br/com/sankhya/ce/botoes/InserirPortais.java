@@ -5,6 +5,7 @@ import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.Registro;
 import br.com.sankhya.jape.EntityFacade;
 import br.com.sankhya.jape.core.JapeSession;
+import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.jape.util.FinderWrapper;
 import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.jape.vo.EntityVO;
@@ -49,6 +50,10 @@ public class InserirPortais implements AcaoRotinaJava {
                 BigDecimal nroUnico = (BigDecimal) linha.getCampo("NUNOTA");
                 idImportador = (String) linha.getCampo("IDIMPORTADOR");
 
+                String retemISS = NativeSql.getString("PAR.RETEMISS", "TGFPAR PAR", "PAR.CODPARC = ?", new Object[]{codparceiro});
+
+                String issRetido = "S".equals(retemISS) ? "S" : "N";
+
                 if (nroUnico == null) {
                     EntityFacade dwfFacade = EntityFacadeFactory.getDWFFacade();
                     DynamicVO cabecalhoNota = (DynamicVO) dwfFacade.getDefaultValueObjectInstance("CabecalhoNota");
@@ -70,6 +75,7 @@ public class InserirPortais implements AcaoRotinaJava {
                     cabecalhoNota.setProperty("NUMCONTRATO", contrato);
                     cabecalhoNota.setProperty("AD_CODLANCNOTA", codlancnota);
                     cabecalhoNota.setProperty("AD_CODIMP", codImportador);
+                    cabecalhoNota.setProperty("ISSRETIDO", issRetido);
                     dwfFacade.createEntity("CabecalhoNota", (EntityVO) cabecalhoNota);
 
                     BigDecimal nunota = cabecalhoNota.asBigDecimal("NUNOTA");
