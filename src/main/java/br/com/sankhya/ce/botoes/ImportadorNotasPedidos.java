@@ -115,7 +115,6 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         BigDecimal codparceiro = toBigDecimal(json.getCodparceiro());
                         BigDecimal codtipooperacao = toBigDecimal(json.getCodtipooperacao());
                         BigDecimal codtiponegociacao = toBigDecimal(json.getCodtiponegociacao());
-                        Timestamp dataalteracaoCab = stringToTimeStamp(json.getDataalteracaoCab());
                         Timestamp datanegociacao = stringToTimeStamp(json.getDatanegociacao());
                         BigDecimal nronota = toBigDecimal(json.getNronota());
                         String tipomovimento = NativeSql.getString("TOP1.TIPMOV", "TGFTOP TOP1", "TOP1.CODTIPOPER = ?", new Object[]{codtipooperacao});
@@ -129,6 +128,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         BigDecimal projeto = toBigDecimal(json.getProjeto());
                         BigDecimal contrato = toBigDecimal(json.getContrato());
                         BigDecimal vendedor = toBigDecimal(json.getVendedor());
+                        BigDecimal cidade = toBigDecimal(json.getCidade());
 
                         BigDecimal atualizaEstoque = BigDecimal.ZERO;
 
@@ -150,7 +150,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                                 cabecalho.setCampo("CODPARC", codparceiro);
                                 cabecalho.setCampo("CODTIPOPER", codtipooperacao);
                                 cabecalho.setCampo("CODTIPVENDA", codtiponegociacao);
-                                cabecalho.setCampo("DTALTER", dataalteracaoCab);
+                                cabecalho.setCampo("DTALTER", getDhAtual());
                                 cabecalho.setCampo("DTNEG", datanegociacao);
                                 cabecalho.setCampo("NUMNOTA", nronota);
                                 cabecalho.setCampo("TIPMOV", tipomovimento);
@@ -163,6 +163,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                                 cabecalho.setCampo("CODPROJ", projeto);
                                 cabecalho.setCampo("OBSERVACAO", observacao);
                                 cabecalho.setCampo("CODVEND", vendedor);
+                                cabecalho.setCampo("CODCID", cidade);
                                 cabecalho.save();
 
                                 codlancnota = (BigDecimal) cabecalho.getCampo("CODLANCNOTA");

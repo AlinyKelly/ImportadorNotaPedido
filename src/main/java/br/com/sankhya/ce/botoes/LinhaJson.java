@@ -16,7 +16,6 @@ public class LinhaJson {
     private final String codparceiro;
     private final String codtipooperacao;
     private final String codtiponegociacao;
-    private final String dataalteracaoCab;
     private final String datanegociacao;
     private final String vlrdescontototal;
     private final String vlrnota;
@@ -26,8 +25,9 @@ public class LinhaJson {
     private final String projeto;
     private final String contrato;
     private final String vendedor;
+    private final String cidade;
 
-    public LinhaJson(String idImportador, String sequencia, String codproduto, String codunidade, String percdesconto, String qtdnegociada, String vlrtotal, String vlrunitario, String codLocalOrig, String nronota, String serienota, String codempresa, String codparceiro, String codtipooperacao, String codtiponegociacao, String dataalteracaoCab, String datanegociacao, String vlrdescontototal, String vlrnota, String observacao, String centroresultados, String natureza, String projeto, String contrato, String vendedor) {
+    public LinhaJson(String idImportador, String sequencia, String codproduto, String codunidade, String percdesconto, String qtdnegociada, String vlrtotal, String vlrunitario, String codLocalOrig, String nronota, String serienota, String codempresa, String codparceiro, String codtipooperacao, String codtiponegociacao, String datanegociacao, String vlrdescontototal, String vlrnota, String observacao, String centroresultados, String natureza, String projeto, String contrato, String vendedor, String cidade) {
         this.idImportador = idImportador;
         this.sequencia = sequencia;
         this.codproduto = codproduto;
@@ -43,7 +43,6 @@ public class LinhaJson {
         this.codparceiro = codparceiro;
         this.codtipooperacao = codtipooperacao;
         this.codtiponegociacao = codtiponegociacao;
-        this.dataalteracaoCab = dataalteracaoCab;
         this.datanegociacao = datanegociacao;
         this.vlrdescontototal = vlrdescontototal;
         this.vlrnota = vlrnota;
@@ -53,6 +52,7 @@ public class LinhaJson {
         this.projeto = projeto;
         this.contrato = contrato;
         this.vendedor = vendedor;
+        this.cidade = cidade;
     }
 
     public String getIdImportador() {
@@ -115,10 +115,6 @@ public class LinhaJson {
         return codtiponegociacao;
     }
 
-    public String getDataalteracaoCab() {
-        return dataalteracaoCab;
-    }
-
     public String getDatanegociacao() {
         return datanegociacao;
     }
@@ -153,6 +149,10 @@ public class LinhaJson {
 
     public String getVendedor() {
         return vendedor;
+    }
+
+    public String getCidade() {
+        return cidade;
     }
 
     @Override
