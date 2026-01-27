@@ -3,4 +3,4 @@ pluginManagement {
         kotlin("jvm") version "2.1.10"
     }
 }
-rootProject.name = "ImportadorNotaPedido"
+rootProject.name = "ImportadorNotaPedidoKedu"
