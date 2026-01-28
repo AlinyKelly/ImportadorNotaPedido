@@ -129,6 +129,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                         BigDecimal contrato = toBigDecimal(json.getContrato());
                         BigDecimal vendedor = toBigDecimal(json.getVendedor());
                         BigDecimal cidade = toBigDecimal(json.getCidade());
+                        BigDecimal cidadePrestacao = toBigDecimal(json.getCidadePrestacao());
 
                         BigDecimal atualizaEstoque = BigDecimal.ZERO;
 
@@ -164,6 +165,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                                 cabecalho.setCampo("OBSERVACAO", observacao);
                                 cabecalho.setCampo("CODVEND", vendedor);
                                 cabecalho.setCampo("CODCID", cidade);
+                                cabecalho.setCampo("CODCIDPREST", cidadePrestacao);
                                 cabecalho.save();
 
                                 codlancnota = (BigDecimal) cabecalho.getCampo("CODLANCNOTA");
@@ -265,7 +267,8 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                 filtradas.get(21),
                 filtradas.get(22),
                 filtradas.get(23),
-                filtradas.get(24)
+                filtradas.get(24),
+                filtradas.get(25)
         );
     }
 
