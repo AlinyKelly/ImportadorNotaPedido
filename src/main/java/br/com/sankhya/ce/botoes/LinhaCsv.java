@@ -1,6 +1,6 @@
 package br.com.sankhya.ce.botoes;
 
-public class LinhaJson {
+public class LinhaCsv {
     private final String idImportador;
     private final String sequencia;
     private final String codproduto;
@@ -26,9 +26,8 @@ public class LinhaJson {
     private final String contrato;
     private final String vendedor;
     private final String cidade;
-    private final String cidadePrestacao;
 
-    public LinhaJson(String idImportador, String sequencia, String codproduto, String codunidade, String percdesconto, String qtdnegociada, String vlrtotal, String vlrunitario, String codLocalOrig, String nronota, String serienota, String codempresa, String codparceiro, String codtipooperacao, String codtiponegociacao, String datanegociacao, String vlrdescontototal, String vlrnota, String observacao, String centroresultados, String natureza, String projeto, String contrato, String vendedor, String cidade, String cidadePrestacao) {
+    public LinhaCsv(String idImportador, String sequencia, String codproduto, String codunidade, String percdesconto, String qtdnegociada, String vlrtotal, String vlrunitario, String codLocalOrig, String nronota, String serienota, String codempresa, String codparceiro, String codtipooperacao, String codtiponegociacao, String datanegociacao, String vlrdescontototal, String vlrnota, String observacao, String centroresultados, String natureza, String projeto, String contrato, String vendedor, String cidade) {
         this.idImportador = idImportador;
         this.sequencia = sequencia;
         this.codproduto = codproduto;
@@ -54,7 +53,6 @@ public class LinhaJson {
         this.contrato = contrato;
         this.vendedor = vendedor;
         this.cidade = cidade;
-        this.cidadePrestacao = cidadePrestacao;
     }
 
     public String getIdImportador() {
@@ -155,10 +153,6 @@ public class LinhaJson {
 
     public String getCidade() {
         return cidade;
-    }
-
-    public String getCidadePrestacao() {
-        return cidadePrestacao;
     }
 
     @Override

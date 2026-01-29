@@ -8,15 +8,20 @@ import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.modelcore.MGEModelException;
 import br.com.sankhya.ws.ServiceContext;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.csv.*;
 
 import java.io.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.*;
 
-import static br.com.sankhya.ce.utilitariosJava.UtilsJava.*;
+import static br.com.sankhya.ce.utilitariosJava.UtilsJava.converterValorMonetario;
+import static br.com.sankhya.ce.utilitariosJava.UtilsJava.getDhAtual;
+import static br.com.sankhya.ce.utilitariosJava.UtilsJava.inserirErroLOG;
+import static br.com.sankhya.ce.utilitariosJava.UtilsJava.stringToTimeStamp;
+import static br.com.sankhya.ce.utilitariosJava.UtilsJava.toBigDecimal;
 
-public class ImportadorNotasPedidos implements AcaoRotinaJava {
+public class ImportadorDocumentos implements AcaoRotinaJava {
     private BigDecimal codImportador;
 
     @Override
@@ -31,6 +36,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
 
         Registro[] linhasSelecionadas = contextoAcao.getLinhas();
 
+        // ultimaLinhaJson será utilizo para exibir a linha em que ocorreu o errro.
         LinhaCsv ultimaLinhaCsv = null;
 
         BigDecimal codlancnota = null;
@@ -40,7 +46,6 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
         try {
 
             for (Registro linha : linhasSelecionadas) {
-                int count = 0;
 
                 codImportador = (BigDecimal) linha.getCampo("CODIMP");
 
@@ -49,27 +54,29 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                 ServiceContext ctx = ServiceContext.getCurrent();
                 File file = new File(ctx.getTempFolder(), "IMPORTADOR" + System.currentTimeMillis());
                 FileUtils.writeByteArrayToFile(file, data);
+                validarCSV(file);
 
                 hnd = JapeSession.open();
 
-                try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-                    String line = br.readLine();
+                try (
+                        Reader reader = new InputStreamReader(new FileInputStream(file), "UTF-8");
+                        CSVParser parser = CSVFormat.DEFAULT
+                                .withDelimiter(';') // ou ','
+                                .withQuote('"')
+                                .withIgnoreSurroundingSpaces()
+                                .withFirstRecordAsHeader()
+                                .withIgnoreEmptyLines()
+                                .parse(reader)
+                ) {
 
-                    while (line != null) {
-                        if (count == 0) {
-                            count++;
-                            line = br.readLine();
+                    for (CSVRecord record : parser) {
+
+                        LinhaCsv json = trataLinha(record);
+                        ultimaLinhaCsv = json;
+
+                        if (json == null) {
                             continue;
                         }
-
-                        count++;
-
-                        if (line.contains("__end_fileinformation__")) {
-                            line = getReplaceFileInfo(line);
-                        }
-
-                        LinhaCsv json = trataLinha(line);
-                        ultimaLinhaCsv = json;
 
                         String idImportadorPlanilha = json.getIdImportador();
                         BigDecimal sequencia = toBigDecimal(json.getSequencia());
@@ -96,10 +103,11 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
 
                             inserirErroLOG(mensagemErro, codImportador);
 
-                            line = br.readLine();
-                            continue;
+                            continue; // pula para o próximo CSVRecord
                         }
 
+
+                        // Começar a buscar os valores do CSV para inserir na tabela
                         //Item
                         BigDecimal codproduto = toBigDecimal(json.getCodproduto());
                         String codunidade = json.getCodunidade();
@@ -189,14 +197,10 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                             itens.save();
 
                         } catch (Exception e) {
-                            inserirErroLOG("ID Importação = " + idImportadorPlanilha + "ERRO:" + e.getMessage() + "\nErro na linha:  \n" + ultimaLinhaCsv, codImportador);
+                            inserirErroLOG("ID Importação = " + idImportadorPlanilha + "ERRO:" + e.getMessage() + "\nInconsistência na linha:  \n" + record.getRecordNumber() + "\n" + ultimaLinhaCsv, codImportador);
                         }
-
-                        line = br.readLine();
                     }
-
                 }
-
             }
 
             System.out.println("Botao de acao Importador Portal Finalizado");
@@ -205,7 +209,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
 
         } catch (Exception e) {
 
-            inserirErroLOG("ERRO:" + e.getMessage() + "\nErro na linha:  \n" + ultimaLinhaCsv, codImportador);
+            inserirErroLOG("ERRO:" + e.getMessage() + "\nInconsistência na linha : \n" + ultimaLinhaCsv, codImportador);
 
         } finally {
             JapeSession.close(hnd);
@@ -213,31 +217,27 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
 
     }
 
-    private LinhaCsv trataLinha(String linha) throws MGEModelException {
-        // split preservando colunas vazias
-        String[] cells;
-        if (linha.contains(";")) {
-            cells = linha.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-        } else {
-            cells = linha.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+    private LinhaCsv trataLinha(CSVRecord record) throws MGEModelException {
+        int TOTAL_COLUNAS = 25;
+
+        if (record.size() < TOTAL_COLUNAS) {
+            inserirErroLOG(
+                    "Linha com colunas insuficientes (" + record.size() + " colunas). Conteúdo: " + record.toString(),
+                    codImportador
+            );
+            return null;
         }
 
         List<String> filtradas = new ArrayList<>();
 
-        // Mantém a estrutura e converte "" → null
-        for (String c : cells) {
-            if (c == null || c.trim().isEmpty()) {
+        for (int i = 0; i < TOTAL_COLUNAS; i++) {
+            String valor = record.get(i);
+
+            if (valor == null || valor.trim().isEmpty()) {
                 filtradas.add(null);
             } else {
-                filtradas.add(c.trim());
+                filtradas.add(valor.trim());
             }
-        }
-
-        if (filtradas.size() < 25) {
-            inserirErroLOG(
-                    "Linha com colunas insuficientes (" + filtradas.size() + " colunas): " + linha,
-                    codImportador);
-            return null;
         }
 
         return new LinhaCsv(
@@ -269,4 +269,37 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
         );
     }
 
+    private void validarCSV(File file) throws Exception {
+        int TOTAL_COLUNAS = 25;
+        int linha = 1;
+
+        try (
+                Reader reader = new InputStreamReader(new FileInputStream(file), "UTF-8");
+                CSVParser parser = CSVFormat.DEFAULT
+                        .withDelimiter(';')
+                        .withQuote('"')
+                        .withFirstRecordAsHeader()
+                        .withIgnoreEmptyLines()
+                        .parse(reader)
+        ) {
+
+            for (CSVRecord record : parser) {
+                linha++;
+
+                if (record.size() < TOTAL_COLUNAS) {
+                    inserirErroLOG(
+                            "Erro no CSV na linha " + linha +
+                                    ". Esperado " + TOTAL_COLUNAS +
+                                    " colunas, encontrado " + record.size(),
+                            codImportador
+                    );
+//                    throw new MGEModelException(
+//                            "Erro no CSV na linha " + linha +
+//                                    ". Esperado " + TOTAL_COLUNAS +
+//                                    " colunas, encontrado " + record.size()
+//                    );
+                }
+            }
+        }
+    }
 }

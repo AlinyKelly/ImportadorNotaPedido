@@ -17,9 +17,11 @@ repositories {
 }
 
 dependencies {
-    compileOnly("com.github.DevSankhya:snk-wrapper:1.1.4")
+    compileOnly("com.github.DevSankhya:snk-wrapper:1.1.5")
     compileOnly("org.wildfly:wildfly-spec-api:16.0.0.Final")
 
+    // Tratar CSV
+    implementation("org.apache.commons:commons-csv:1.10.0")
     // Status HTTP / Apoio as Servlets
     implementation("com.squareup.okhttp3:okhttp:3.9.0")
     // https://mvnrepository.com/artifact/com.squareup.okio/okio
