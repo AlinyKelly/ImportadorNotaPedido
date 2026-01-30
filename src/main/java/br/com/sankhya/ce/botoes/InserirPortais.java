@@ -128,7 +128,7 @@ public class InserirPortais implements AcaoRotinaJava {
                     impostosHelper.salvarNota();
 
                     // Refazer Financeiro
-                    BigDecimal atualizaFinanceiro = NativeSql.getBigDecimal("ATUALFIN", "TGFTOP", "this.CODTIPOPER = ? ", new Object[]{codtipooperacao});
+                    BigDecimal atualizaFinanceiro = NativeSql.getBigDecimal("ATUALFIN", "TGFTOP", "CODTIPOPER = ? ", new Object[]{codtipooperacao});
                     if (!(atualizaFinanceiro.compareTo(BigDecimal.ZERO) == 0)) {
                         CentralFinanceiro financeiro = new CentralFinanceiro();
                         financeiro.inicializaNota(nunota);
