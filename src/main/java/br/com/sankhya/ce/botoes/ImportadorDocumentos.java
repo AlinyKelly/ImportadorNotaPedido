@@ -12,14 +12,11 @@ import org.apache.commons.csv.*;
 
 import java.io.*;
 import java.math.BigDecimal;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.*;
 
-import static br.com.sankhya.ce.utilitariosJava.UtilsJava.converterValorMonetario;
-import static br.com.sankhya.ce.utilitariosJava.UtilsJava.getDhAtual;
-import static br.com.sankhya.ce.utilitariosJava.UtilsJava.inserirErroLOG;
-import static br.com.sankhya.ce.utilitariosJava.UtilsJava.stringToTimeStamp;
-import static br.com.sankhya.ce.utilitariosJava.UtilsJava.toBigDecimal;
+import static br.com.sankhya.ce.utilitariosJava.UtilsJava.*;
 
 public class ImportadorDocumentos implements AcaoRotinaJava {
     private BigDecimal codImportador;
@@ -124,6 +121,10 @@ public class ImportadorDocumentos implements AcaoRotinaJava {
                         BigDecimal codtipooperacao = toBigDecimal(json.getCodtipooperacao());
                         BigDecimal codtiponegociacao = toBigDecimal(json.getCodtiponegociacao());
                         Timestamp datanegociacao = stringToTimeStamp(json.getDatanegociacao());
+                        Timestamp dataHoraFaturamento = stringToTimeStampHora(json.getDataHoraFaturamento());
+                        Timestamp dataEntradasaida = stringToTimeStamp(json.getDataEntradasaida());
+                        Timestamp dataMovimento = stringToTimeStamp(json.getDataMovimento());
+                        Time horaMovimento = stringToTime(json.getDataHoraFaturamento());
                         BigDecimal nronota = toBigDecimal(json.getNronota());
                         String tipomovimento = NativeSql.getString("TOP1.TIPMOV", "TGFTOP TOP1", "TOP1.CODTIPOPER = ?", new Object[]{codtipooperacao});
                         String atualEstoque = NativeSql.getString("TOP2.ATUALEST", "TGFTOP TOP2", "TOP2.CODTIPOPER = ?", new Object[]{codtipooperacao});
@@ -160,6 +161,10 @@ public class ImportadorDocumentos implements AcaoRotinaJava {
                                 cabecalho.setCampo("CODTIPVENDA", codtiponegociacao);
                                 cabecalho.setCampo("DTALTER", getDhAtual());
                                 cabecalho.setCampo("DTNEG", datanegociacao);
+                                cabecalho.setCampo("DTFATUR", dataHoraFaturamento);
+                                cabecalho.setCampo("DTENTSAI", dataEntradasaida);
+                                cabecalho.setCampo("DTMOV", dataMovimento);
+                                cabecalho.setCampo("HRMOV", horaMovimento);
                                 cabecalho.setCampo("NUMNOTA", nronota);
                                 cabecalho.setCampo("TIPMOV", tipomovimento);
                                 cabecalho.setCampo("SERIENOTA", serienota);
@@ -218,7 +223,7 @@ public class ImportadorDocumentos implements AcaoRotinaJava {
     }
 
     private LinhaCsv trataLinha(CSVRecord record) throws MGEModelException {
-        int TOTAL_COLUNAS = 25;
+        int TOTAL_COLUNAS = 28;
 
         if (record.size() < TOTAL_COLUNAS) {
             inserirErroLOG(
@@ -265,12 +270,15 @@ public class ImportadorDocumentos implements AcaoRotinaJava {
                 filtradas.get(21),
                 filtradas.get(22),
                 filtradas.get(23),
-                filtradas.get(24)
+                filtradas.get(24),
+                filtradas.get(25),
+                filtradas.get(26),
+                filtradas.get(27)
         );
     }
 
     private void validarCSV(File file) throws Exception {
-        int TOTAL_COLUNAS = 25;
+        int TOTAL_COLUNAS = 28;
         int linha = 1;
 
         try (

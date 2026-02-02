@@ -233,7 +233,7 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
             }
         }
 
-        if (filtradas.size() < 25) {
+        if (filtradas.size() < 28) {
             inserirErroLOG(
                     "Linha com colunas insuficientes (" + filtradas.size() + " colunas): " + linha,
                     codImportador);
@@ -265,7 +265,10 @@ public class ImportadorNotasPedidos implements AcaoRotinaJava {
                 filtradas.get(21),
                 filtradas.get(22),
                 filtradas.get(23),
-                filtradas.get(24)
+                filtradas.get(24),
+                filtradas.get(25),
+                filtradas.get(26),
+                filtradas.get(27)
         );
     }
 

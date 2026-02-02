@@ -7,6 +7,7 @@ import br.com.sankhya.jape.wrapper.JapeWrapper;
 import br.com.sankhya.modelcore.MGEModelException;
 
 import java.math.BigDecimal;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -109,6 +110,35 @@ public class UtilsJava {
             return null;
         }
     }
+
+    public static Timestamp stringToTimeStampHora(String str) {
+        if (str == null || str.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            Date date = formatter.parse(str);
+            return new Timestamp(date.getTime());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static Time stringToTime(String str) {
+        if (str == null || str.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            DateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+            Date date = formatter.parse(str);
+            return new Time(date.getTime());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 
     public static Timestamp getDhAtual() {
         return new Timestamp(System.currentTimeMillis());

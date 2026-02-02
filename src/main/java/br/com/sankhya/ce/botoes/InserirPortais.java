@@ -16,6 +16,7 @@ import br.com.sankhya.modelcore.util.EntityFacadeFactory;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Collection;
 
@@ -37,6 +38,10 @@ public class InserirPortais implements AcaoRotinaJava {
                 BigDecimal codtiponegociacao = (BigDecimal) linha.getCampo("CODTIPVENDA");
                 Timestamp dataalteracaoCab = (Timestamp) linha.getCampo("DTALTER");
                 Timestamp datanegociacao = (Timestamp) linha.getCampo("DTNEG");
+                Timestamp dataHoraFaturamento = (Timestamp) linha.getCampo("DTFATUR");
+                Timestamp dataEntradasaida = (Timestamp) linha.getCampo("DTENTSAI");
+                Timestamp dataMovimento = (Timestamp) linha.getCampo("DTMOV");
+                Time horaMovimento = (Time) linha.getCampo("HRMOV");
                 BigDecimal nronota = (BigDecimal) linha.getCampo("NUMNOTA");
                 String tipomovimento = (String) linha.getCampo("TIPMOV");
                 BigDecimal vlrdescontototal = (BigDecimal) linha.getCampo("VLRDESCTOT");
@@ -65,6 +70,10 @@ public class InserirPortais implements AcaoRotinaJava {
                     cabecalhoNota.setProperty("CODTIPVENDA", codtiponegociacao);
                     cabecalhoNota.setProperty("DTALTER", dataalteracaoCab);
                     cabecalhoNota.setProperty("DTNEG", datanegociacao);
+                    cabecalhoNota.setProperty("DTFATUR", dataHoraFaturamento);
+                    cabecalhoNota.setProperty("DTENTSAI", dataEntradasaida);
+                    cabecalhoNota.setProperty("DTMOV", dataMovimento);
+                    cabecalhoNota.setProperty("HRMOV", horaMovimento);
                     cabecalhoNota.setProperty("TIPMOV", tipomovimento);
                     cabecalhoNota.setProperty("VLRDESCTOT", vlrdescontototal);
                     cabecalhoNota.setProperty("VLRNOTA", vlrnota);

@@ -17,6 +17,9 @@ public class LinhaCsv {
     private final String codtipooperacao;
     private final String codtiponegociacao;
     private final String datanegociacao;
+    private final String dataHoraFaturamento;
+    private final String dataEntradasaida;
+    private final String dataMovimento;
     private final String vlrdescontototal;
     private final String vlrnota;
     private final String observacao;
@@ -27,7 +30,7 @@ public class LinhaCsv {
     private final String vendedor;
     private final String cidade;
 
-    public LinhaCsv(String idImportador, String sequencia, String codproduto, String codunidade, String percdesconto, String qtdnegociada, String vlrtotal, String vlrunitario, String codLocalOrig, String nronota, String serienota, String codempresa, String codparceiro, String codtipooperacao, String codtiponegociacao, String datanegociacao, String vlrdescontototal, String vlrnota, String observacao, String centroresultados, String natureza, String projeto, String contrato, String vendedor, String cidade) {
+    public LinhaCsv(String idImportador, String sequencia, String codproduto, String codunidade, String percdesconto, String qtdnegociada, String vlrtotal, String vlrunitario, String codLocalOrig, String nronota, String serienota, String codempresa, String codparceiro, String codtipooperacao, String codtiponegociacao, String datanegociacao, String dataHoraFaturamento, String dataEntradasaida, String dataMovimento, String vlrdescontototal, String vlrnota, String observacao, String centroresultados, String natureza, String projeto, String contrato, String vendedor, String cidade) {
         this.idImportador = idImportador;
         this.sequencia = sequencia;
         this.codproduto = codproduto;
@@ -44,6 +47,9 @@ public class LinhaCsv {
         this.codtipooperacao = codtipooperacao;
         this.codtiponegociacao = codtiponegociacao;
         this.datanegociacao = datanegociacao;
+        this.dataHoraFaturamento = dataHoraFaturamento;
+        this.dataEntradasaida = dataEntradasaida;
+        this.dataMovimento = dataMovimento;
         this.vlrdescontototal = vlrdescontototal;
         this.vlrnota = vlrnota;
         this.observacao = observacao;
@@ -117,6 +123,18 @@ public class LinhaCsv {
 
     public String getDatanegociacao() {
         return datanegociacao;
+    }
+
+    public String getDataHoraFaturamento() {
+        return dataHoraFaturamento;
+    }
+
+    public String getDataEntradasaida() {
+        return dataEntradasaida;
+    }
+
+    public String getDataMovimento() {
+        return dataMovimento;
     }
 
     public String getVlrdescontototal() {
