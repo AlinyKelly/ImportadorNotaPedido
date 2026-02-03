@@ -54,6 +54,7 @@ public class InserirPortais implements AcaoRotinaJava {
                 BigDecimal contrato = (BigDecimal) linha.getCampo("NUMCONTRATO");
                 BigDecimal nroUnico = (BigDecimal) linha.getCampo("NUNOTA");
                 BigDecimal cidade = (BigDecimal) linha.getCampo("CODCID");
+                String nronfse = (String) linha.getCampo("NUMNFSE");
                 idImportador = (String) linha.getCampo("IDIMPORTADOR");
 
                 String retemISS = NativeSql.getString("PAR.RETEMISS", "TGFPAR PAR", "PAR.CODPARC = ?", new Object[]{codparceiro});
@@ -84,6 +85,7 @@ public class InserirPortais implements AcaoRotinaJava {
                     cabecalhoNota.setProperty("CODPROJ", projeto);
                     cabecalhoNota.setProperty("NUMCONTRATO", contrato);
                     cabecalhoNota.setProperty("CODCID", cidade);
+                    cabecalhoNota.setProperty("NUMNFSE", nronfse);
                     cabecalhoNota.setProperty("AD_CODLANCNOTA", codlancnota);
                     cabecalhoNota.setProperty("AD_CODIMP", codImportador);
                     cabecalhoNota.setProperty("ISSRETIDO", issRetido);

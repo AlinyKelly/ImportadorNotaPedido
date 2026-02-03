@@ -29,8 +29,9 @@ public class LinhaCsv {
     private final String contrato;
     private final String vendedor;
     private final String cidade;
+    private final String nroNfse;
 
-    public LinhaCsv(String idImportador, String sequencia, String codproduto, String codunidade, String percdesconto, String qtdnegociada, String vlrtotal, String vlrunitario, String codLocalOrig, String nronota, String serienota, String codempresa, String codparceiro, String codtipooperacao, String codtiponegociacao, String datanegociacao, String dataHoraFaturamento, String dataEntradasaida, String dataMovimento, String vlrdescontototal, String vlrnota, String observacao, String centroresultados, String natureza, String projeto, String contrato, String vendedor, String cidade) {
+    public LinhaCsv(String idImportador, String sequencia, String codproduto, String codunidade, String percdesconto, String qtdnegociada, String vlrtotal, String vlrunitario, String codLocalOrig, String nronota, String serienota, String codempresa, String codparceiro, String codtipooperacao, String codtiponegociacao, String datanegociacao, String dataHoraFaturamento, String dataEntradasaida, String dataMovimento, String vlrdescontototal, String vlrnota, String observacao, String centroresultados, String natureza, String projeto, String contrato, String vendedor, String cidade, String nroNfse) {
         this.idImportador = idImportador;
         this.sequencia = sequencia;
         this.codproduto = codproduto;
@@ -59,6 +60,7 @@ public class LinhaCsv {
         this.contrato = contrato;
         this.vendedor = vendedor;
         this.cidade = cidade;
+        this.nroNfse = nroNfse;
     }
 
     public String getIdImportador() {
@@ -172,6 +174,8 @@ public class LinhaCsv {
     public String getCidade() {
         return cidade;
     }
+
+    public String getNroNfse() { return nroNfse; }
 
     @Override
     public String toString() {
