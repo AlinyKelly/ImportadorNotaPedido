@@ -139,6 +139,7 @@ public class ImportadorDocumentos implements AcaoRotinaJava {
                         BigDecimal vendedor = toBigDecimal(json.getVendedor());
                         BigDecimal cidade = toBigDecimal(json.getCidade());
                         String nronfse = json.getNroNfse();
+                        BigDecimal codLocalOper = toBigDecimal(json.getCodlocalOper());
 
                         BigDecimal atualizaEstoque = BigDecimal.ZERO;
 
@@ -179,6 +180,7 @@ public class ImportadorDocumentos implements AcaoRotinaJava {
                                 cabecalho.setCampo("CODVEND", vendedor);
                                 cabecalho.setCampo("CODCID", cidade);
                                 cabecalho.setCampo("NUMNFSE", nronfse);
+                                cabecalho.setCampo("CODLOCOPER", codLocalOper);
                                 cabecalho.save();
 
                                 codlancnota = (BigDecimal) cabecalho.getCampo("CODLANCNOTA");
@@ -225,7 +227,7 @@ public class ImportadorDocumentos implements AcaoRotinaJava {
     }
 
     private LinhaCsv trataLinha(CSVRecord record) throws MGEModelException {
-        int TOTAL_COLUNAS = 29;
+        int TOTAL_COLUNAS = 30;
 
         if (record.size() < TOTAL_COLUNAS) {
             inserirErroLOG(
@@ -276,12 +278,13 @@ public class ImportadorDocumentos implements AcaoRotinaJava {
                 filtradas.get(25),
                 filtradas.get(26),
                 filtradas.get(27),
-                filtradas.get(28)
+                filtradas.get(28),
+                filtradas.get(29)
         );
     }
 
     private void validarCSV(File file) throws Exception {
-        int TOTAL_COLUNAS = 29;
+        int TOTAL_COLUNAS = 30;
         int linha = 1;
 
         try (
