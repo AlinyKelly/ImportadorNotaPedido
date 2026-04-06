@@ -55,6 +55,7 @@ public class InserirPortais implements AcaoRotinaJava {
                 BigDecimal nroUnico = (BigDecimal) linha.getCampo("NUNOTA");
                 BigDecimal cidade = (BigDecimal) linha.getCampo("CODCID");
                 String nronfse = (String) linha.getCampo("NUMNFSE");
+                BigDecimal codLocalOper = (BigDecimal) linha.getCampo("CODLOCOPER");
                 idImportador = (String) linha.getCampo("IDIMPORTADOR");
 
                 String retemISS = NativeSql.getString("PAR.RETEMISS", "TGFPAR PAR", "PAR.CODPARC = ?", new Object[]{codparceiro});
@@ -89,6 +90,7 @@ public class InserirPortais implements AcaoRotinaJava {
                     cabecalhoNota.setProperty("AD_CODLANCNOTA", codlancnota);
                     cabecalhoNota.setProperty("AD_CODIMP", codImportador);
                     cabecalhoNota.setProperty("ISSRETIDO", issRetido);
+                    cabecalhoNota.setProperty("CODLOCOPER", codLocalOper);
                     dwfFacade.createEntity("CabecalhoNota", (EntityVO) cabecalhoNota);
 
                     BigDecimal nunota = cabecalhoNota.asBigDecimal("NUNOTA");
