@@ -30,9 +30,6 @@ public class ImportarPlanilha implements AcaoRotinaJava {
 
     @Override
     public void doAction(ContextoAcao contexto) throws Exception {
-        //Controle em memoria dos IDs ja validados no banco
-        Set<String> idsImportadorJaVerificados = new HashSet<>();
-        Map<String, String> idsImportadorExistentesBanco = new HashMap<>();
 
         ServiceContext ctx = ServiceContext.getCurrent();
 
@@ -43,10 +40,6 @@ public class ImportarPlanilha implements AcaoRotinaJava {
 
         // ultimaLinhaJson sera utilizo para exibir a linha em que ocorreu o errro.
         LinhaCSVFin ultimaLinhaCsv = null;
-
-//        BigDecimal codlancnota = null;
-
-        String idImportadorControle = null;
 
         if (linhas == null || linhas.length == 0) {
             throw new UnsupportedOperationException("Selecione um linha para realizar a importacao.");
@@ -82,11 +75,8 @@ public class ImportarPlanilha implements AcaoRotinaJava {
                             continue;
                         }
 
-                        String idImportadorPlanilha = json.getIdImpfinlan();
-
                         // Comecar a buscar os valores do CSV para inserir na tabela
                         BigDecimal id_impfinlan = toBigDecimal(json.getIdImpfinlan());
-                        BigDecimal id_impfin = toBigDecimal(json.getIdImpfin());
                         BigDecimal nufin = toBigDecimal(json.getNufin());
                         BigDecimal codparc = toBigDecimal(json.getCodparc());
                         String cnpjcpfparc = json.getCnpjcpfparc();
@@ -97,20 +87,20 @@ public class ImportarPlanilha implements AcaoRotinaJava {
                         BigDecimal nunota = toBigDecimal(json.getNunota());
                         Timestamp dtneg = stringToTimeStamp(json.getDtneg());
                         BigDecimal vlrdesdob = converterValorMonetario(json.getVlrdesdob());
-                        Timestamp dtvenc =  stringToTimeStamp(json.getDtvenc());
-                        Timestamp dtvencinic =  stringToTimeStamp(json.getDtvencinic());
+                        Timestamp dtvenc = stringToTimeStamp(json.getDtvenc());
+                        Timestamp dtvencinic = stringToTimeStamp(json.getDtvencinic());
                         String historico = json.getHistorico();
                         BigDecimal codbco = toBigDecimal(json.getCodbco());
-                        BigDecimal codctabcoint =  toBigDecimal(json.getCodctabcoint());
+                        BigDecimal codctabcoint = toBigDecimal(json.getCodctabcoint());
                         BigDecimal codtiptit = toBigDecimal(json.getCodtiptit());
                         BigDecimal codtipoper = toBigDecimal(json.getCodtipoper());
-                        Timestamp dhtipoper =  stringToTimeStampHora(json.getDhtipoper());
+                        Timestamp dhtipoper = stringToTimeStampHora(json.getDhtipoper());
                         BigDecimal codnat = toBigDecimal(json.getCodnat());
                         BigDecimal codcencus = toBigDecimal(json.getCodcencus());
                         BigDecimal codproj = toBigDecimal(json.getCodproj());
                         Timestamp dhmov = stringToTimeStamp(json.getDhmov());
                         BigDecimal numcontrato = toBigDecimal(json.getNumcontrato());
-                        String desdobramento  = json.getDesdobramento();
+                        String desdobramento = json.getDesdobramento();
                         BigDecimal codvend = toBigDecimal(json.getCodvend());
                         String nossonum = json.getNossonum();
                         BigDecimal vlrirf = converterValorMonetario(json.getVlrirf());
@@ -129,111 +119,60 @@ public class ImportarPlanilha implements AcaoRotinaJava {
                         String rateado = json.getRateado();
                         Timestamp dtentsai = stringToTimeStamp(json.getDtentsai());
 
-                        boolean novoFinanceiro = !idImportadorPlanilha.equals(idImportadorControle);
-
                         try {
-                            if (novoFinanceiro) {
-                                JapeWrapper lanDAO = JapeFactory.dao("IsceImportadorFinanceiroLan");
-                                DynamicVO save = lanDAO.create()
-                                        .set("ID_IMPFIN", id_impfin)
-                                        .set("NUFIN", nufin)
-                                        .set("CODPARC", codparc)
-                                        .set("CNPJCPFPARC", cnpjcpfparc)
-                                        .set("RECDESP", recdesp)
-                                        .set("PROVISAO", provisao)
-                                        .set("CODEMP", codemp)
-                                        .set("NUMNOTA", numnota)
-                                        .set("NUNOTA", nunota)
-                                        .set("DTNEG", dtneg)
-                                        .set("VLRDESDOB", vlrdesdob)
-                                        .set("DTVENC", dtvenc)
-                                        .set("DTVENCINIC", dtvencinic)
-                                        .set("HISTORICO", historico.toCharArray())
-                                        .set("CODBCO", codbco)
-                                        .set("CODCTABCOINT", codctabcoint)
-                                        .set("CODTIPTIT", codtiptit)
-                                        .set("CODTIPOPER", codtipoper)
-                                        .set("DHTIPOPER", dhtipoper)
-                                        .set("CODNAT", codnat)
-                                        .set("CODCENCUS", codcencus)
-                                        .set("CODPROJ", codproj)
-                                        .set("DHMOV", dhmov)
-                                        .set("NUMCONTRATO", numcontrato)
-                                        .set("DESDOBRAMENTO", desdobramento)
-                                        .set("CODVEND", codvend)
-                                        .set("NOSSONUM", nossonum)
-                                        .set("VLRIRF", vlrirf)
-                                        .set("VLRISS", vlriss)
-                                        .set("ISSRETIDO", issretido)
-                                        .set("VLRDESC", vlrdesc)
-                                        .set("VLRVENDOR", vlrvendor)
-                                        .set("CODIGOBARRA", codigobarra)
-                                        .set("LINHADIGITAVEL", linhadigitavel)
-                                        .set("TIPJURO", tipjuro)
-                                        .set("TIPMULTA", tipmulta)
-                                        .set("VLRJURO", vlrjuro)
-                                        .set("VLRMULTA", vlrmulta)
-                                        .set("CODMOEDA", codmoeda)
-                                        .set("ORIGEM", origem)
-                                        .set("RATEADO", rateado)
-                                        .set("DTENTSAI", dtentsai)
-                                        .save();
+                            JapeWrapper lanDAO = JapeFactory.dao("IsceImportadorFinanceiroLan");
+                            DynamicVO save = lanDAO.create()
+                                    .set("ID_IMPFIN", codImportador)
+                                    .set("NUFIN", nufin)
+                                    .set("CODPARC", codparc)
+                                    .set("CNPJCPFPARC", cnpjcpfparc)
+                                    .set("RECDESP", recdesp)
+                                    .set("PROVISAO", provisao)
+                                    .set("CODEMP", codemp)
+                                    .set("NUMNOTA", numnota)
+                                    .set("NUNOTA", nunota)
+                                    .set("DTNEG", dtneg)
+                                    .set("VLRDESDOB", vlrdesdob)
+                                    .set("DTVENC", dtvenc)
+                                    .set("DTVENCINIC", dtvencinic)
+                                    .set("HISTORICO", historico.toCharArray())
+                                    .set("CODBCO", codbco)
+                                    .set("CODCTABCOINT", codctabcoint)
+                                    .set("CODTIPTIT", codtiptit)
+                                    .set("CODTIPOPER", codtipoper)
+                                    .set("DHTIPOPER", dhtipoper)
+                                    .set("CODNAT", codnat)
+                                    .set("CODCENCUS", codcencus)
+                                    .set("CODPROJ", codproj)
+                                    .set("DHMOV", dhmov)
+                                    .set("NUMCONTRATO", numcontrato)
+                                    .set("DESDOBRAMENTO", desdobramento)
+                                    .set("CODVEND", codvend)
+                                    .set("NOSSONUM", nossonum)
+                                    .set("VLRIRF", vlrirf)
+                                    .set("VLRISS", vlriss)
+                                    .set("ISSRETIDO", issretido)
+                                    .set("VLRDESC", vlrdesc)
+                                    .set("VLRVENDOR", vlrvendor)
+                                    .set("CODIGOBARRA", codigobarra)
+                                    .set("LINHADIGITAVEL", linhadigitavel)
+                                    .set("TIPJURO", tipjuro)
+                                    .set("TIPMULTA", tipmulta)
+                                    .set("VLRJURO", vlrjuro)
+                                    .set("VLRMULTA", vlrmulta)
+                                    .set("CODMOEDA", codmoeda)
+                                    .set("ORIGEM", origem)
+                                    .set("RATEADO", rateado)
+                                    .set("DTENTSAI", dtentsai)
+                                    .save();
 
-//                                Registro novoLancamentoFin = contexto.novaLinha("IsceImportadorFinanceiroLan");
-//                                novoLancamentoFin.setCampo("ID_IMPFINLAN", id_impfinlan);
-//                                novoLancamentoFin.setCampo("ID_IMPFIN", id_impfin);
-//                                novoLancamentoFin.setCampo("NUFIN", nufin);
-//                                novoLancamentoFin.setCampo("CODPARC", codparc);
-//                                novoLancamentoFin.setCampo("CNPJCPFPARC", cnpjcpfparc);
-//                                novoLancamentoFin.setCampo("RECDESP", recdesp);
-//                                novoLancamentoFin.setCampo("PROVISAO", provisao);
-//                                novoLancamentoFin.setCampo("CODEMP", codemp);
-//                                novoLancamentoFin.setCampo("NUMNOTA", numnota);
-//                                novoLancamentoFin.setCampo("NUNOTA", nunota);
-//                                novoLancamentoFin.setCampo("DTNEG", dtneg);
-//                                novoLancamentoFin.setCampo("VLRDESDOB", vlrdesdob);
-//                                novoLancamentoFin.setCampo("DTVENC", dtvenc);
-//                                novoLancamentoFin.setCampo("DTVENCINIC", dtvencinic);
-//                                novoLancamentoFin.setCampo("HISTORICO", historico);
-//                                novoLancamentoFin.setCampo("CODBCO", codbco);
-//                                novoLancamentoFin.setCampo("CODCTABCOINT", codctabcoint);
-//                                novoLancamentoFin.setCampo("CODTIPTIT", codtiptit);
-//                                novoLancamentoFin.setCampo("CODTIPOPER", codtipoper);
-//                                novoLancamentoFin.setCampo("DHTIPOPER", dhtipoper);
-//                                novoLancamentoFin.setCampo("CODNAT", codnat);
-//                                novoLancamentoFin.setCampo("CODCENCUS", codcencus);
-//                                novoLancamentoFin.setCampo("CODPROJ", codproj);
-//                                novoLancamentoFin.setCampo("DHMOV", dhmov);
-//                                novoLancamentoFin.setCampo("NUMCONTRATO", numcontrato);
-//                                novoLancamentoFin.setCampo("DESDOBRAMENTO", desdobramento);
-//                                novoLancamentoFin.setCampo("CODVEND", codvend);
-//                                novoLancamentoFin.setCampo("NOSSONUM", nossonum);
-//                                novoLancamentoFin.setCampo("VLRIRF", vlrirf);
-//                                novoLancamentoFin.setCampo("VLRISS", vlriss);
-//                                novoLancamentoFin.setCampo("ISSRETIDO", issretido);
-//                                novoLancamentoFin.setCampo("VLRDESC", vlrdesc);
-//                                novoLancamentoFin.setCampo("VLRVENDOR", vlrvendor);
-//                                novoLancamentoFin.setCampo("CODIGOBARRA", codigobarra);
-//                                novoLancamentoFin.setCampo("LINHADIGITAVEL", linhadigitavel);
-//                                novoLancamentoFin.setCampo("TIPJURO", tipjuro);
-//                                novoLancamentoFin.setCampo("TIPMULTA", tipmulta);
-//                                novoLancamentoFin.setCampo("VLRJURO", vlrjuro);
-//                                novoLancamentoFin.setCampo("VLRMULTA", vlrmulta);
-//                                novoLancamentoFin.setCampo("CODMOEDA", codmoeda);
-//                                novoLancamentoFin.setCampo("ORIGEM", origem);
-//                                novoLancamentoFin.setCampo("RATEADO", rateado);
-//                                novoLancamentoFin.setCampo("DTENTSAI", dtentsai);
-
-                                idImportadorControle = idImportadorPlanilha;
-
-                            }
+//                            BigDecimal idImpfinlan = save.asBigDecimal("ID_IMPFINLAN");
 
                             contexto.setMensagemRetorno("Importacao Finalizada! ");
 
                         } catch (Exception e) {
-                            inserirErroLOG("ID Importacao = " + idImportadorPlanilha + "ERRO:" + e.getMessage() + "\nInconsistencia na linha:  \n" + record.getRecordNumber() + "\n" + ultimaLinhaCsv, codImportador);
+                            inserirErroLOG("ID Importacao = " + id_impfinlan + "ERRO:" + e.getMessage() + "\nInconsistencia na linha:  \n" + record.getRecordNumber() + "\n" + ultimaLinhaCsv, codImportador);
                         }
-
 
                     }
                 }
