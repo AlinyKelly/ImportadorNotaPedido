@@ -12,6 +12,8 @@ import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.jape.wrapper.JapeWrapper;
 import br.com.sankhya.jape.wrapper.fluid.FluidCreateVO;
 import br.com.sankhya.modelcore.MGEModelException;
+import br.com.sankhya.modelcore.facades.ImportadorDadosSP;
+import br.com.sankhya.modelcore.facades.ImportadorDadosSPBean;
 import br.com.sankhya.modelcore.util.EntityFacadeFactory;
 import br.com.sankhya.ws.ServiceContext;
 import com.sankhya.util.JdbcUtils;
@@ -110,11 +112,6 @@ public class ImportarPlanilha implements AcaoRotinaJava {
 
                     for (CSVRecord record : parser) {
                         Map<String, String> linhaCSV = record.toMap();
-
-                        System.out.println("COLUNAS ENCONTRADAS:");
-                        for (String coluna : linhaCSV.keySet()) {
-                            System.out.println("[" + coluna + "]");
-                        }
 
                         try {
                             FluidCreateVO save = lanDAO.create();
