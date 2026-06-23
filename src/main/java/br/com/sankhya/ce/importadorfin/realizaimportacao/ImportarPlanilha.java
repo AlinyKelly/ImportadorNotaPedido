@@ -3,13 +3,18 @@ package br.com.sankhya.ce.importadorfin.realizaimportacao;
 import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.Registro;
+import br.com.sankhya.jape.EntityFacade;
 import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.dao.JdbcWrapper;
+import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.jape.wrapper.JapeWrapper;
+import br.com.sankhya.jape.wrapper.fluid.FluidCreateVO;
 import br.com.sankhya.modelcore.MGEModelException;
+import br.com.sankhya.modelcore.util.EntityFacadeFactory;
 import br.com.sankhya.ws.ServiceContext;
+import com.sankhya.util.JdbcUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -20,6 +25,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
+import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -35,6 +41,8 @@ public class ImportarPlanilha implements AcaoRotinaJava {
 
         JapeSession.SessionHandle hnd = null;
         JdbcWrapper jdbc = null;
+        NativeSql sql = null;
+        ResultSet rset = null;
 
         Registro[] linhas = contexto.getLinhas();
 
@@ -46,16 +54,47 @@ public class ImportarPlanilha implements AcaoRotinaJava {
         }
 
         try {
+            hnd = JapeSession.open();
+            hnd.setFindersMaxRows(-1);
+            EntityFacade entity = EntityFacadeFactory.getDWFFacade();
+            jdbc = entity.getJdbcWrapper();
+            jdbc.openSession();
+
+            sql = new NativeSql(jdbc);
+
+            Map<String, String> tiposCampos = new HashMap<>();
+
+            sql.appendSql("SELECT NOMECAMPO, TIPCAMPO FROM TDDCAM WHERE NOMETAB = 'TSCE_IMPFINLAN' AND NOMECAMPO NOT IN ('ID_IMPFIN', 'DTALTER', 'CODUSU', 'MENSAGEM', 'STATUSIMP', 'DHPROCESSAMENTO', 'DATA_IMPORTACAO') ORDER BY NUCAMPO");
+
+            rset = sql.executeQuery();
+
+            while (rset.next()) {
+                // aqui podemos capturar o valor retornado na consulta
+                String nomecampo = rset.getString("NOMECAMPO");
+                String tipoCampo = rset.getString("TIPCAMPO");
+
+                tiposCampos.put(nomecampo.toUpperCase(), tipoCampo);
+            }
+
             for (Registro linha : linhas) {
                 codImportador = (BigDecimal) linha.getCampo("ID_IMPFIN");
 
                 byte[] data = (byte[]) linha.getCampo("ARQUIVO");
 
                 File file = new File(ctx.getTempFolder(), "IMPORTADORFIN" + System.currentTimeMillis());
-                FileUtils.writeByteArrayToFile(file, data);
-                validarCSV(file);
 
-                hnd = JapeSession.open();
+                String conteudo = new String(data, java.nio.charset.StandardCharsets.UTF_8);
+
+                conteudo = conteudo.replaceAll(
+                        "__start_fileinformation__.*?__end_fileinformation__",
+                        ""
+                );
+
+                FileUtils.writeStringToFile(
+                        file,
+                        conteudo,
+                        String.valueOf(java.nio.charset.StandardCharsets.UTF_8)
+                );
 
                 try (
                         Reader reader = new InputStreamReader(new FileInputStream(file), "UTF-8");
@@ -67,111 +106,57 @@ public class ImportarPlanilha implements AcaoRotinaJava {
                                 .withIgnoreEmptyLines()
                                 .parse(reader)
                 ) {
-                    for (CSVRecord record : parser) {
-                        LinhaCSVFin json = trataLinha(record);
-                        ultimaLinhaCsv = json;
+                    JapeWrapper lanDAO = JapeFactory.dao("IsceImportadorFinanceiroLan");
 
-                        if (json == null) {
-                            continue;
+                    for (CSVRecord record : parser) {
+                        Map<String, String> linhaCSV = record.toMap();
+
+                        System.out.println("COLUNAS ENCONTRADAS:");
+                        for (String coluna : linhaCSV.keySet()) {
+                            System.out.println("[" + coluna + "]");
                         }
 
-                        // Comecar a buscar os valores do CSV para inserir na tabela
-                        BigDecimal id_impfinlan = toBigDecimal(json.getIdImpfinlan());
-                        BigDecimal nufin = toBigDecimal(json.getNufin());
-                        BigDecimal codparc = toBigDecimal(json.getCodparc());
-                        String cnpjcpfparc = json.getCnpjcpfparc();
-                        String recdesp = json.getRecdesp();
-                        String provisao = json.getProvisao();
-                        BigDecimal codemp = toBigDecimal(json.getCodemp());
-                        BigDecimal numnota = toBigDecimal(json.getNumnota());
-                        BigDecimal nunota = toBigDecimal(json.getNunota());
-                        Timestamp dtneg = stringToTimeStamp(json.getDtneg());
-                        BigDecimal vlrdesdob = converterValorMonetario(json.getVlrdesdob());
-                        Timestamp dtvenc = stringToTimeStamp(json.getDtvenc());
-                        Timestamp dtvencinic = stringToTimeStamp(json.getDtvencinic());
-                        String historico = json.getHistorico();
-                        BigDecimal codbco = toBigDecimal(json.getCodbco());
-                        BigDecimal codctabcoint = toBigDecimal(json.getCodctabcoint());
-                        BigDecimal codtiptit = toBigDecimal(json.getCodtiptit());
-                        BigDecimal codtipoper = toBigDecimal(json.getCodtipoper());
-                        Timestamp dhtipoper = stringToTimeStampHora(json.getDhtipoper());
-                        BigDecimal codnat = toBigDecimal(json.getCodnat());
-                        BigDecimal codcencus = toBigDecimal(json.getCodcencus());
-                        BigDecimal codproj = toBigDecimal(json.getCodproj());
-                        Timestamp dhmov = stringToTimeStamp(json.getDhmov());
-                        BigDecimal numcontrato = toBigDecimal(json.getNumcontrato());
-                        String desdobramento = json.getDesdobramento();
-                        BigDecimal codvend = toBigDecimal(json.getCodvend());
-                        String nossonum = json.getNossonum();
-                        BigDecimal vlrirf = converterValorMonetario(json.getVlrirf());
-                        BigDecimal vlriss = converterValorMonetario(json.getVlriss());
-                        String issretido = json.getIssretido();
-                        BigDecimal vlrdesc = converterValorMonetario(json.getVlrdesc());
-                        BigDecimal vlrvendor = converterValorMonetario(json.getVlrvendor());
-                        String codigobarra = json.getCodigobarra();
-                        String linhadigitavel = json.getLinhadigitavel();
-                        String tipjuro = json.getTipjuro();
-                        String tipmulta = json.getTipmulta();
-                        BigDecimal vlrjuro = converterValorMonetario(json.getVlrjuro());
-                        BigDecimal vlrmulta = converterValorMonetario(json.getVlrmulta());
-                        BigDecimal codmoeda = toBigDecimal(json.getCodmoeda());
-                        String origem = json.getOrigem();
-                        String rateado = json.getRateado();
-                        Timestamp dtentsai = stringToTimeStamp(json.getDtentsai());
-
                         try {
-                            JapeWrapper lanDAO = JapeFactory.dao("IsceImportadorFinanceiroLan");
-                            DynamicVO save = lanDAO.create()
-                                    .set("ID_IMPFIN", codImportador)
-                                    .set("NUFIN", nufin)
-                                    .set("CODPARC", codparc)
-                                    .set("CNPJCPFPARC", cnpjcpfparc)
-                                    .set("RECDESP", recdesp)
-                                    .set("PROVISAO", provisao)
-                                    .set("CODEMP", codemp)
-                                    .set("NUMNOTA", numnota)
-                                    .set("NUNOTA", nunota)
-                                    .set("DTNEG", dtneg)
-                                    .set("VLRDESDOB", vlrdesdob)
-                                    .set("DTVENC", dtvenc)
-                                    .set("DTVENCINIC", dtvencinic)
-                                    .set("HISTORICO", historico.toCharArray())
-                                    .set("CODBCO", codbco)
-                                    .set("CODCTABCOINT", codctabcoint)
-                                    .set("CODTIPTIT", codtiptit)
-                                    .set("CODTIPOPER", codtipoper)
-                                    .set("DHTIPOPER", dhtipoper)
-                                    .set("CODNAT", codnat)
-                                    .set("CODCENCUS", codcencus)
-                                    .set("CODPROJ", codproj)
-                                    .set("DHMOV", dhmov)
-                                    .set("NUMCONTRATO", numcontrato)
-                                    .set("DESDOBRAMENTO", desdobramento)
-                                    .set("CODVEND", codvend)
-                                    .set("NOSSONUM", nossonum)
-                                    .set("VLRIRF", vlrirf)
-                                    .set("VLRISS", vlriss)
-                                    .set("ISSRETIDO", issretido)
-                                    .set("VLRDESC", vlrdesc)
-                                    .set("VLRVENDOR", vlrvendor)
-                                    .set("CODIGOBARRA", codigobarra)
-                                    .set("LINHADIGITAVEL", linhadigitavel)
-                                    .set("TIPJURO", tipjuro)
-                                    .set("TIPMULTA", tipmulta)
-                                    .set("VLRJURO", vlrjuro)
-                                    .set("VLRMULTA", vlrmulta)
-                                    .set("CODMOEDA", codmoeda)
-                                    .set("ORIGEM", origem)
-                                    .set("RATEADO", rateado)
-                                    .set("DTENTSAI", dtentsai)
-                                    .save();
+                            FluidCreateVO save = lanDAO.create();
+                            save.set("ID_IMPFIN", codImportador);
 
-//                            BigDecimal idImpfinlan = save.asBigDecimal("ID_IMPFINLAN");
+                            Map<String, String> linhaCSVTratada = new HashMap<>();
+
+                            for (Map.Entry<String, String> entry : linhaCSV.entrySet()) {
+
+                                String coluna = entry.getKey()
+                                        .replace("\uFEFF", "")
+                                        .trim()
+                                        .toUpperCase();
+
+                                linhaCSVTratada.put(coluna, entry.getValue());
+                            }
+
+                            linhaCSV = linhaCSVTratada;
+
+                            if (get(linhaCSV, "ID_IMPFINLAN") == null) {
+                                inserirErroLOG("Coluna obrigatoria ID_IMPFINLAN nao encontrada", codImportador);
+                                continue;
+                            }
+
+                            for (Map.Entry<String, String> coluna : linhaCSV.entrySet()) {
+                                String nomeColuna = coluna.getKey();   // HEADER do CSV
+                                String valor = coluna.getValue();      // valor da celula
+
+                                if (!nomeColuna.equals("ID_IMPFINLAN") && valor != null && !valor.trim().isEmpty()) {
+                                    String tipoCampo = tiposCampos.get(nomeColuna);
+
+                                    Object valorConvertido = converterValor(valor, tipoCampo);
+
+                                    save.set(nomeColuna, valorConvertido);
+                                }
+                            }
+                            save.save();
 
                             contexto.setMensagemRetorno("Importacao Finalizada! ");
 
                         } catch (Exception e) {
-                            inserirErroLOG("ID Importacao = " + id_impfinlan + "ERRO:" + e.getMessage() + "\nInconsistencia na linha:  \n" + record.getRecordNumber() + "\n" + ultimaLinhaCsv, codImportador);
+                            inserirErroLOG("ERRO: " + e.getMessage(), codImportador);
                         }
 
                     }
@@ -180,108 +165,12 @@ public class ImportarPlanilha implements AcaoRotinaJava {
         } catch (Exception e) {
             inserirErroLOG("ERRO:" + e.getMessage() + "\nInconsistencia na linha : \n" + ultimaLinhaCsv, codImportador);
         } finally {
+            JdbcUtils.closeResultSet(rset);
+            NativeSql.releaseResources(sql);
+            JdbcWrapper.closeSession(jdbc);
             JapeSession.close(hnd);
         }
 
-    }
-
-    private LinhaCSVFin trataLinha(CSVRecord record) throws MGEModelException {
-        int TOTAL_COLUNAS = 43;
-
-        if (record.size() < TOTAL_COLUNAS) {
-            inserirErroLOG(
-                    "Linha com colunas insuficientes (" + record.size() + " colunas). Conteudo: " + record.toString(),
-                    codImportador
-            );
-            return null;
-        }
-
-        List<String> filtradas = new ArrayList<>();
-
-        for (int i = 0; i < TOTAL_COLUNAS; i++) {
-            String valor = record.get(i);
-
-            if (valor == null || valor.trim().isEmpty()) {
-                filtradas.add(null);
-            } else {
-                filtradas.add(valor.trim());
-            }
-        }
-
-        return new LinhaCSVFin(
-                filtradas.get(0),
-                filtradas.get(1),
-                filtradas.get(2),
-                filtradas.get(3),
-                filtradas.get(4),
-                filtradas.get(5),
-                filtradas.get(6),
-                filtradas.get(7),
-                filtradas.get(8),
-                filtradas.get(9),
-                filtradas.get(10),
-                filtradas.get(11),
-                filtradas.get(12),
-                filtradas.get(13),
-                filtradas.get(14),
-                filtradas.get(15),
-                filtradas.get(16),
-                filtradas.get(17),
-                filtradas.get(18),
-                filtradas.get(19),
-                filtradas.get(20),
-                filtradas.get(21),
-                filtradas.get(22),
-                filtradas.get(23),
-                filtradas.get(24),
-                filtradas.get(25),
-                filtradas.get(26),
-                filtradas.get(27),
-                filtradas.get(28),
-                filtradas.get(29),
-                filtradas.get(30),
-                filtradas.get(31),
-                filtradas.get(32),
-                filtradas.get(33),
-                filtradas.get(34),
-                filtradas.get(35),
-                filtradas.get(36),
-                filtradas.get(37),
-                filtradas.get(38),
-                filtradas.get(39),
-                filtradas.get(40),
-                filtradas.get(41),
-                filtradas.get(42)
-        );
-    }
-
-    private void validarCSV(File file) throws Exception {
-        int TOTAL_COLUNAS = 43;
-        int linha = 1;
-
-        try (
-                Reader reader = new InputStreamReader(new FileInputStream(file), "UTF-8");
-                CSVParser parser = CSVFormat.DEFAULT
-                        .withDelimiter(';')
-                        .withQuote('"')
-                        .withFirstRecordAsHeader()
-                        .withIgnoreEmptyLines()
-                        .parse(reader)
-        ) {
-
-            for (CSVRecord record : parser) {
-                linha++;
-
-                if (record.size() < TOTAL_COLUNAS) {
-                    inserirErroLOG(
-                            "Erro no CSV na linha " + linha +
-                                    ". Esperado " + TOTAL_COLUNAS +
-                                    " colunas, encontrado " + record.size(),
-                            codImportador
-                    );
-                }
-            }
-        }
     }
 
     //corrigir a criacao do log
@@ -299,6 +188,42 @@ public class ImportarPlanilha implements AcaoRotinaJava {
             MGEModelException.throwMe(e);
         } finally {
             JapeSession.close(hnd);
+        }
+    }
+
+    private String get(Map<String, String> map, String key) {
+        String v = map.get(key);
+        return (v == null || v.trim().isEmpty()) ? null : v.trim();
+    }
+
+    private Object converterValor(String valor, String tipoCampo) {
+
+        if (valor == null || valor.trim().isEmpty()) {
+            return null;
+        }
+
+        valor = valor.trim();
+
+        switch (tipoCampo) {
+
+            case "F": // Numero Decimal
+            case "I": // Numero Inteiro
+                return new BigDecimal(valor.replace(",", "."));
+
+
+            case "D": // Data
+            case "H": // Data e Hora
+                return stringToTimeStamp(valor);
+
+
+            case "C": // CLOB
+                return valor.toCharArray();
+
+
+            case "S": // Texto
+            case "T": // Hora
+            default:
+                return valor;
         }
     }
 
