@@ -5,7 +5,6 @@ import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.Registro;
 import br.com.sankhya.jape.EntityFacade;
 import br.com.sankhya.jape.core.JapeSession;
-import br.com.sankhya.jape.dao.FieldProxy;
 import br.com.sankhya.jape.dao.JdbcWrapper;
 import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.jape.vo.DynamicVO;
@@ -13,22 +12,18 @@ import br.com.sankhya.jape.vo.VOProperty;
 import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.jape.wrapper.JapeWrapper;
 import br.com.sankhya.jape.wrapper.fluid.FluidCreateVO;
+import br.com.sankhya.jape.wrapper.fluid.FluidUpdateVO;
 import br.com.sankhya.modelcore.MGEModelException;
 import br.com.sankhya.modelcore.auth.AuthenticationInfo;
 import br.com.sankhya.modelcore.helper.ImportadorDadosHelper;
-import br.com.sankhya.modelcore.util.DynamicEntityNames;
 import br.com.sankhya.modelcore.util.EntityFacadeFactory;
 import br.com.sankhya.ws.ServiceContext;
-import com.google.gson.JsonObject;
 
 import java.math.BigDecimal;
-import java.sql.CallableStatement;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 public class ProcessarFinanceiro implements AcaoRotinaJava {
     private String ID_EXTERNO_ = "ID_EXTERNO_";
@@ -50,20 +45,37 @@ public class ProcessarFinanceiro implements AcaoRotinaJava {
         }
 
         for (Registro linha : linhas) {
-            BigDecimal idImpfin = (BigDecimal) linha.getCampo("ID_IMPFIN");
+            BigDecimal idImpfin = (BigDecimal) linha.getCampo("IDIMPFIN");
 
             try {
                 hnd = JapeSession.open();
 
                 JapeWrapper dao = JapeFactory.dao("IsceImportadorFinanceiroLan");
 
-                Collection<DynamicVO> dynamicVOs = dao.find("ID_IMPFIN = ?", idImpfin.toString());
+                Collection<DynamicVO> dynamicVOs = dao.find("IDIMPFIN = ?", idImpfin.toString());
 
                 for (DynamicVO modeloVO : dynamicVOs) {
+                    BigDecimal idLancamento = modeloVO.asBigDecimal("IDIMPFINLAN");
                     String status = modeloVO.asString("STATUSIMP");
+                    BigDecimal nufin = modeloVO.asBigDecimal("NUFIN");
+
+                    System.out.println("Lancamento = " + idLancamento);
 
                     if (!"3".equals(status)) {
-                        inserirRegistros(jdbc, sql, contexto, modeloVO);
+
+                        if (nufin != null) {
+                            try {
+                                updateRegistros(modeloVO, idImpfin, idLancamento, nufin);
+                            } catch (Exception e) {
+                                inserirErroStatus("Erro: " + e.getMessage(), idImpfin, idLancamento);
+                            }
+                        } else {
+                            try {
+                                insertRegistros(modeloVO, idImpfin, idLancamento);
+                            } catch (Exception e) {
+                                inserirErroStatus("Erro: " + e.getMessage(), idImpfin, idLancamento);
+                            }
+                        }
 
                     }
 
@@ -77,7 +89,7 @@ public class ProcessarFinanceiro implements AcaoRotinaJava {
 
         }
 
-        contexto.setMensagemRetorno("Financeiro inserido com sucesso!");
+        contexto.setMensagemRetorno("Proceso concluido!");
 
     }
 
@@ -103,26 +115,103 @@ public class ProcessarFinanceiro implements AcaoRotinaJava {
         }
     }
 
-    private void atualizarRegistros(JdbcWrapper jdbc, NativeSql sql, ContextoAcao contexto, DynamicVO modeloVO) {
+    private void updateRegistros(DynamicVO modeloVO, BigDecimal codImportador, BigDecimal idLancamento, BigDecimal nufin) throws Exception {
+        JapeWrapper lanDAO = JapeFactory.dao("Financeiro");
+        FluidUpdateVO updateFin = lanDAO.prepareToUpdateByPK(nufin);
 
-    }
-
-    public static void inserirErroLOG(String erro, BigDecimal codImportador) throws MGEModelException {
-        JapeSession.SessionHandle hnd = null;
         try {
-            hnd = JapeSession.open();
-            JapeWrapper logDAO = JapeFactory.dao("IsceImportadorFinanceiroLog");
-            DynamicVO save = logDAO.create()
-                    .set("ID_IMPFIN", codImportador)
-                    .set("ERRO", erro.toCharArray())
-                    .set("DHERRO", new Timestamp(System.currentTimeMillis()))
-                    .save();
+            Iterator<?> iterator = modeloVO.iterator();
+            while (iterator.hasNext()) {
+                VOProperty property = (VOProperty) iterator.next();
+
+                if (property.getValue() != null &&
+                        !property.getValue().toString().isEmpty() &&
+                        !property.getName().contains(this.ID_EXTERNO_) &&
+                        !property.getName().startsWith("CPL_") &&
+                        !property.getName().startsWith("TAB_") &&
+                        !property.getName().startsWith("IsceImportador") &&
+                        !property.getName().equals("MENSAGEM") &&
+                        !property.getName().equals("IDIMPFIN") &&
+                        !property.getName().equals("IDIMPFINLAN") &&
+                        !property.getName().equals("STATUSIMP") &&
+                        !property.getName().equals("DHPROCESSAMENTO") &&
+                        !property.getName().equals("DATAIMPORTACAO") &&
+                        !property.getName().equals("DHTIPOPER") &&
+                        !property.getName().equals("Usuario")
+                ) {
+                    if (property.getName().startsWith("NTA_")) {
+                        String coluna = property.getName().substring(4);
+                        updateFin.set(coluna, property.getValue());
+                    } else if (property.getName().equals("HISTORICO")) {
+                        String historico = modeloVO.asString("HISTORICO");
+                        updateFin.set(property.getName(), historico);
+                    } else {
+                        updateFin.set(property.getName(), property.getValue());
+                    }
+                }
+
+                updateFin.update();
+
+                inserirStatusUpdate(codImportador, idLancamento, "Financeiro atualizado.");
+
+            }
         } catch (Exception e) {
             MGEModelException.throwMe(e);
-        } finally {
-            JapeSession.close(hnd);
         }
+
     }
+
+    private void insertRegistros(DynamicVO modeloVO, BigDecimal idImpFin, BigDecimal idImpFinLan) throws Exception {
+        System.out.println("Linha: " + modeloVO.asBigDecimal("IDIMPFINLAN"));
+
+        BigDecimal nufin = null;
+        try {
+            JapeWrapper insertFinDAO = JapeFactory.dao("Financeiro");
+            FluidCreateVO save = insertFinDAO.create();
+
+            Iterator<?> iterator = modeloVO.iterator();
+            while (iterator.hasNext()) {
+                VOProperty property = (VOProperty) iterator.next();
+
+                if (property.getValue() != null &&
+                        !property.getValue().toString().isEmpty() &&
+                        !property.getName().contains(this.ID_EXTERNO_) &&
+                        !property.getName().startsWith("CPL_") &&
+                        !property.getName().startsWith("TAB_") &&
+                        !property.getName().startsWith("IsceImportador") &&
+                        !property.getName().equals("NUFIN") &&
+                        !property.getName().equals("MENSAGEM") &&
+                        !property.getName().equals("IDIMPFIN") &&
+                        !property.getName().equals("IDIMPFINLAN") &&
+                        !property.getName().equals("STATUSIMP") &&
+                        !property.getName().equals("DHPROCESSAMENTO") &&
+                        !property.getName().equals("DATAIMPORTACAO") &&
+                        !property.getName().equals("DHTIPOPER") &&
+                        !property.getName().equals("Usuario")
+                ) {
+                    if (property.getName().startsWith("NTA_")) {
+                        String coluna = property.getName().substring(4);
+                        save.set(coluna, property.getValue());
+                    } else if (property.getName().equals("HISTORICO")) {
+                        String historico = modeloVO.asString("HISTORICO");
+                        save.set(property.getName(), historico);
+                    } else {
+                        save.set(property.getName(), property.getValue());
+                    }
+                }
+
+            }
+
+            nufin = save.save().asBigDecimal("NUFIN");
+
+            inserirStatusConcluido(idImpFin, idImpFinLan, nufin, "Financeiro criado.");
+
+        } catch (Exception e) {
+            MGEModelException.throwMe(e);
+        }
+
+    }
+
 
     private String getInsert(ContextoAcao contexto, DynamicVO modeloVO, StringBuilder columns, StringBuilder values, String insert) throws Exception {
         Iterator<?> iterator = modeloVO.iterator();
@@ -137,11 +226,11 @@ public class ProcessarFinanceiro implements AcaoRotinaJava {
                     !property.getName().startsWith("IsceImportador") &&
                     !property.getName().equals("NUFIN") &&
                     !property.getName().equals("MENSAGEM") &&
-                    !property.getName().equals("ID_IMPFIN") &&
-                    !property.getName().equals("ID_IMPFINLAN") &&
+                    !property.getName().equals("IDIMPFIN") &&
+                    !property.getName().equals("IDIMPFINLAN") &&
                     !property.getName().equals("STATUSIMP") &&
                     !property.getName().equals("DHPROCESSAMENTO") &&
-                    !property.getName().equals("DATA_IMPORTACAO") &&
+                    !property.getName().equals("DATAIMPORTACAO") &&
                     !property.getName().equals("DHTIPOPER") &&
                     !property.getName().equals("Usuario")
             ) {
@@ -173,6 +262,75 @@ public class ProcessarFinanceiro implements AcaoRotinaJava {
             return null;
         }
 
+    }
+
+    public static void inserirErroLOG(String erro, BigDecimal codImportador) throws MGEModelException {
+        JapeSession.SessionHandle hnd = null;
+        try {
+            hnd = JapeSession.open();
+            JapeWrapper logDAO = JapeFactory.dao("IsceImportadorFinanceiroLog");
+            DynamicVO save = logDAO.create()
+                    .set("IDIMPFIN", codImportador)
+                    .set("ERRO", erro.toCharArray())
+                    .set("DHERRO", new Timestamp(System.currentTimeMillis()))
+                    .save();
+        } catch (Exception e) {
+            MGEModelException.throwMe(e);
+        } finally {
+            JapeSession.close(hnd);
+        }
+    }
+
+    public static void inserirErroStatus(String erro, BigDecimal codImportador, BigDecimal codlancamento) throws MGEModelException {
+        JapeSession.SessionHandle hnd = null;
+        try {
+            hnd = JapeSession.open();
+            JapeFactory.dao("IsceImportadorFinanceiroLan")
+                    .prepareToUpdateByPK(codlancamento, codImportador)
+                    .set("STATUSIMP", "2")
+                    .set("MENSAGEM", erro.toCharArray())
+                    .set("DHPROCESSAMENTO", new Timestamp(System.currentTimeMillis()))
+                    .update();
+        } catch (Exception e) {
+            MGEModelException.throwMe(e);
+        } finally {
+            JapeSession.close(hnd);
+        }
+    }
+
+    public static void inserirStatusConcluido(BigDecimal codImportador, BigDecimal codlancamento, BigDecimal nufinCriado, String msg) throws MGEModelException {
+        JapeSession.SessionHandle hnd = null;
+        try {
+            hnd = JapeSession.open();
+            JapeFactory.dao("IsceImportadorFinanceiroLan")
+                    .prepareToUpdateByPK(codlancamento, codImportador)
+                    .set("NUFIN", nufinCriado)
+                    .set("STATUSIMP", "3")
+                    .set("MENSAGEM", msg.toCharArray())
+                    .set("DHPROCESSAMENTO", new Timestamp(System.currentTimeMillis()))
+                    .update();
+        } catch (Exception e) {
+            MGEModelException.throwMe(e);
+        } finally {
+            JapeSession.close(hnd);
+        }
+    }
+
+    public static void inserirStatusUpdate(BigDecimal codImportador, BigDecimal codlancamento, String msg) throws MGEModelException {
+        JapeSession.SessionHandle hnd = null;
+        try {
+            hnd = JapeSession.open();
+            JapeFactory.dao("IsceImportadorFinanceiroLan")
+                    .prepareToUpdateByPK(codlancamento, codImportador)
+                    .set("STATUSIMP", "3")
+                    .set("MENSAGEM", msg.toCharArray())
+                    .set("DHPROCESSAMENTO", new Timestamp(System.currentTimeMillis()))
+                    .update();
+        } catch (Exception e) {
+            MGEModelException.throwMe(e);
+        } finally {
+            JapeSession.close(hnd);
+        }
     }
 
 }

@@ -66,7 +66,7 @@ public class ImportarPlanilha implements AcaoRotinaJava {
 
             Map<String, String> tiposCampos = new HashMap<>();
 
-            sql.appendSql("SELECT NOMECAMPO, TIPCAMPO FROM TDDCAM WHERE NOMETAB = 'TSCE_IMPFINLAN' AND NOMECAMPO NOT IN ('ID_IMPFIN', 'DTALTER', 'CODUSU', 'MENSAGEM', 'STATUSIMP', 'DHPROCESSAMENTO', 'DATA_IMPORTACAO') ORDER BY NUCAMPO");
+            sql.appendSql("SELECT NOMECAMPO, TIPCAMPO FROM TDDCAM WHERE NOMETAB = 'TSCEIMPFINLAN' AND NOMECAMPO NOT IN ('IDIMPFIN', 'DTALTER', 'CODUSU', 'MENSAGEM', 'STATUSIMP', 'DHPROCESSAMENTO', 'DATAIMPORTACAO') ORDER BY NUCAMPO");
 
             rset = sql.executeQuery();
 
@@ -79,7 +79,7 @@ public class ImportarPlanilha implements AcaoRotinaJava {
             }
 
             for (Registro linha : linhas) {
-                codImportador = (BigDecimal) linha.getCampo("ID_IMPFIN");
+                codImportador = (BigDecimal) linha.getCampo("IDIMPFIN");
 
                 byte[] data = (byte[]) linha.getCampo("ARQUIVO");
 
@@ -115,7 +115,7 @@ public class ImportarPlanilha implements AcaoRotinaJava {
 
                         try {
                             FluidCreateVO save = lanDAO.create();
-                            save.set("ID_IMPFIN", codImportador);
+                            save.set("IDIMPFIN", codImportador);
 
                             Map<String, String> linhaCSVTratada = new HashMap<>();
 
@@ -131,8 +131,8 @@ public class ImportarPlanilha implements AcaoRotinaJava {
 
                             linhaCSV = linhaCSVTratada;
 
-                            if (get(linhaCSV, "ID_IMPFINLAN") == null) {
-                                inserirErroLOG("Coluna obrigatoria ID_IMPFINLAN nao encontrada", codImportador);
+                            if (get(linhaCSV, "IDIMPFINLAN") == null) {
+                                inserirErroLOG("Coluna obrigatoria IDIMPFINLAN nao encontrada", codImportador);
                                 continue;
                             }
 
@@ -140,7 +140,7 @@ public class ImportarPlanilha implements AcaoRotinaJava {
                                 String nomeColuna = coluna.getKey();   // HEADER do CSV
                                 String valor = coluna.getValue();      // valor da celula
 
-                                if (!nomeColuna.equals("ID_IMPFINLAN") && valor != null && !valor.trim().isEmpty()) {
+                                if (!nomeColuna.equals("IDIMPFINLAN") && valor != null && !valor.trim().isEmpty()) {
                                     String tipoCampo = tiposCampos.get(nomeColuna);
 
                                     Object valorConvertido = converterValor(valor, tipoCampo);
@@ -148,6 +148,7 @@ public class ImportarPlanilha implements AcaoRotinaJava {
                                     save.set(nomeColuna, valorConvertido);
                                 }
                             }
+                            save.set("STATUSIMP", "1");
                             save.save();
 
                             contexto.setMensagemRetorno("Importacao Finalizada! ");
@@ -177,7 +178,7 @@ public class ImportarPlanilha implements AcaoRotinaJava {
             hnd = JapeSession.open();
             JapeWrapper logDAO = JapeFactory.dao("IsceImportadorFinanceiroLog");
             DynamicVO save = logDAO.create()
-                    .set("ID_IMPFIN", codImportador)
+                    .set("IDIMPFIN", codImportador)
                     .set("ERRO", erro.toCharArray())
                     .set("DHERRO", new Timestamp(System.currentTimeMillis()))
                     .save();

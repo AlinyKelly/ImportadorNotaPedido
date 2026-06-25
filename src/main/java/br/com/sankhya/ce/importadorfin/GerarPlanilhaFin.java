@@ -34,7 +34,7 @@ public class GerarPlanilhaFin implements AcaoRotinaJava {
 
         List<String> colunas = new ArrayList<>();
 
-        String chaveSessao = "download_TSCE_IMPFINLAN_" + UIDGenerator.getNextID();
+        String chaveSessao = "download_TSCEIMPFINLAN_" + UIDGenerator.getNextID();
 
         try {
             hnd = JapeSession.open();
@@ -45,7 +45,7 @@ public class GerarPlanilhaFin implements AcaoRotinaJava {
 
             sql = new NativeSql(jdbc);
 
-            sql.appendSql("SELECT NOMECAMPO FROM TDDCAM WHERE NOMETAB = 'TSCE_IMPFINLAN' AND NOMECAMPO NOT IN ('ID_IMPFIN', 'DTALTER', 'CODUSU', 'MENSAGEM', 'STATUSIMP', 'DHPROCESSAMENTO', 'DATA_IMPORTACAO') ORDER BY NUCAMPO");
+            sql.appendSql("SELECT NOMECAMPO FROM TDDCAM WHERE NOMETAB = 'TSCEIMPFINLAN' AND NOMECAMPO NOT IN ('IDIMPFIN', 'DTALTER', 'CODUSU', 'MENSAGEM', 'STATUSIMP', 'DHPROCESSAMENTO', 'DATAIMPORTACAO') ORDER BY NUCAMPO");
 
             rset = sql.executeQuery();
 
@@ -85,7 +85,7 @@ public class GerarPlanilhaFin implements AcaoRotinaJava {
             try (ZipOutputStream zipOut = new ZipOutputStream(zipOutput)) {
 
                 // Nome do arquivo dentro do ZIP
-                ZipEntry zipEntry = new ZipEntry("TSCE_IMPFINLAN.csv");
+                ZipEntry zipEntry = new ZipEntry("TSCEIMPFINLAN.csv");
 
                 zipOut.putNextEntry(zipEntry);
 
@@ -101,7 +101,7 @@ public class GerarPlanilhaFin implements AcaoRotinaJava {
 
             byte[] zipBytes = zipOutput.toByteArray();
 
-            String nomeZip = "TSCE_IMPFINLAN.zip";
+            String nomeZip = "TSCEIMPFINLAN.zip";
             SessionFile sessionFileZip = SessionFile.createSessionFile(nomeZip, "application/zip", zipBytes);
             ServiceContext.getCurrent().putHttpSessionAttribute(chaveSessao, sessionFileZip);
 
