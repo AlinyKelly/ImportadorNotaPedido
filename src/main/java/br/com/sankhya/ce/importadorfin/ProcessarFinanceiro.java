@@ -93,28 +93,6 @@ public class ProcessarFinanceiro implements AcaoRotinaJava {
 
     }
 
-    private void inserirRegistros(JdbcWrapper jdbc, NativeSql sql, ContextoAcao contexto, DynamicVO modeloVO) throws MGEModelException {
-        String insert = "INSERT INTO TGFFIN " + "(NUFIN, :NOME_COLUNA) VALUES((SELECT DISTINCT Snk_Get_Nufin AS NUFIN FROM TGFFIN WHERE ROWNUM = 1), :VALORES)";
-        StringBuilder columns = new StringBuilder();
-        StringBuilder values = new StringBuilder();
-
-        EntityFacade entity = EntityFacadeFactory.getDWFFacade();
-        jdbc = entity.getJdbcWrapper();
-        sql = new NativeSql(jdbc);
-
-        try {
-            String queryInsert = getInsert(contexto, modeloVO, columns, values, insert);
-
-            sql.appendSql(queryInsert);
-            sql.executeUpdate();
-        } catch (Exception e) {
-            MGEModelException.throwMe(e);
-        } finally {
-            NativeSql.releaseResources(sql);
-            JdbcWrapper.closeSession(jdbc);
-        }
-    }
-
     private void updateRegistros(DynamicVO modeloVO, BigDecimal codImportador, BigDecimal idLancamento, BigDecimal nufin) throws Exception {
         JapeWrapper lanDAO = JapeFactory.dao("Financeiro");
         FluidUpdateVO updateFin = lanDAO.prepareToUpdateByPK(nufin);
@@ -208,58 +186,6 @@ public class ProcessarFinanceiro implements AcaoRotinaJava {
 
         } catch (Exception e) {
             MGEModelException.throwMe(e);
-        }
-
-    }
-
-
-    private String getInsert(ContextoAcao contexto, DynamicVO modeloVO, StringBuilder columns, StringBuilder values, String insert) throws Exception {
-        Iterator<?> iterator = modeloVO.iterator();
-        while (iterator.hasNext()) {
-            VOProperty property = (VOProperty) iterator.next();
-
-            if (property.getValue() != null &&
-                    !property.getValue().toString().isEmpty() &&
-                    !property.getName().contains(this.ID_EXTERNO_) &&
-                    !property.getName().startsWith("CPL_") &&
-                    !property.getName().startsWith("TAB_") &&
-                    !property.getName().startsWith("IsceImportador") &&
-                    !property.getName().equals("NUFIN") &&
-                    !property.getName().equals("MENSAGEM") &&
-                    !property.getName().equals("IDIMPFIN") &&
-                    !property.getName().equals("IDIMPFINLAN") &&
-                    !property.getName().equals("STATUSIMP") &&
-                    !property.getName().equals("DHPROCESSAMENTO") &&
-                    !property.getName().equals("DATAIMPORTACAO") &&
-                    !property.getName().equals("DHTIPOPER") &&
-                    !property.getName().equals("Usuario")
-            ) {
-                if (property.getName().startsWith("NTA_")) {
-                    columns.append(property.getName().substring(4) + ",");
-                } else {
-                    columns.append(property.getName() + ",");
-                }
-
-                if (property.getName().equals("HISTORICO")) {
-                    String historico = modeloVO.asString("HISTORICO");
-                    values.append("'" + historico + "',");
-                } else if (property.getValue() instanceof BigDecimal) {
-                    values.append(((BigDecimal) property.getValue()).doubleValue() + ",");
-                } else if (property.getValue() instanceof String) {
-                    values.append("'" + (String) property.getValue() + "',");
-                } else if (property.getValue() instanceof Timestamp) {
-                    String sData = (new SimpleDateFormat("dd/MM/yyyy")).format((Timestamp) property.getValue());
-                    values.append((ImportadorDadosHelper.isOracleDb() ? "TO_DATE('" + sData + "','DD/MM/YYYY')" : "CONVERT(DATE,'" + sData + "', 103)") + ",");
-                }
-            }
-
-        }
-
-        if (!columns.toString().isEmpty() && !values.toString().isEmpty()) {
-            insert = insert.replace(":NOME_COLUNA", columns.replace(columns.length() - 1, columns.length(), "")).replace(":VALORES", values.replace(values.length() - 1, values.length(), ""));
-            return insert;
-        } else {
-            return null;
         }
 
     }
